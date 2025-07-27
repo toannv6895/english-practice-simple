@@ -1,0 +1,73 @@
+import React from 'react';
+import { SubtitleEntry } from '../types';
+import { cn } from '../utils/cn';
+
+interface ListeningModeProps {
+  subtitles: SubtitleEntry[];
+  currentTime: number;
+  onSeekToTime: (time: number) => void;
+}
+
+export const ListeningMode: React.FC<ListeningModeProps> = ({
+  subtitles,
+  currentTime,
+  onSeekToTime
+}) => {
+  const getCurrentSubtitleIndex = (): number => {
+    return subtitles.findIndex(
+      subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
+    );
+  };
+
+  const currentIndex = getCurrentSubtitleIndex();
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">Listening Mode</h2>
+      
+      <div className="max-h-96 overflow-y-auto">
+        {subtitles.map((subtitle, index) => {
+          const isActive = index === currentIndex;
+          const isPast = currentTime > subtitle.endTime;
+          
+          return (
+            <div
+              key={subtitle.id}
+              className={cn(
+                "p-3 mb-2 rounded-lg cursor-pointer transition-all duration-200",
+                isActive && "bg-primary-100 border-l-4 border-primary-500",
+                isPast && !isActive && "bg-gray-50 text-gray-600",
+                !isActive && !isPast && "hover:bg-gray-50"
+              )}
+              onClick={() => onSeekToTime(subtitle.startTime)}
+            >
+              <div className="flex justify-between items-start mb-1">
+                <span className="text-sm text-gray-500">
+                  {formatTime(subtitle.startTime)} - {formatTime(subtitle.endTime)}
+                </span>
+                {isActive && (
+                  <span className="text-xs bg-primary-500 text-white px-2 py-1 rounded-full">
+                    Playing
+                  </span>
+                )}
+              </div>
+              <p className={cn(
+                "text-sm leading-relaxed",
+                isActive && "font-medium text-gray-900",
+                !isActive && "text-gray-700"
+              )}>
+                {subtitle.text}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+function formatTime(time: number): string {
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+} 
