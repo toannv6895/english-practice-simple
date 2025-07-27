@@ -1,30 +1,76 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
+import { compareTexts } from '../utils/textComparison';
 
 export const DictationMode: React.FC = memo(() => {
-  const { subtitles, currentTime, isPlaying, setCurrentTime } = useAppStore();
+  const { 
+    subtitles, 
+    currentTime, 
+    isPlaying, 
+    currentDictationIndex,
+    setCurrentTime, 
+    setIsPlaying,
+    setCurrentDictationIndex,
+    practiceMode
+  } = useAppStore();
+  
   const [userInput, setUserInput] = useState('');
-  const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const getCurrentSubtitleIndex = (): number => {
-    return subtitles.findIndex(
-      subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
-    );
-  };
+  // Use the tracked dictation index instead of calculating from time
+  const currentSubtitleIndex = currentDictationIndex;
 
+  // Initialize dictation index when component loads
   useEffect(() => {
-    const newIndex = getCurrentSubtitleIndex();
-    if (newIndex !== -1 && newIndex !== currentSubtitleIndex) {
-      setCurrentSubtitleIndex(newIndex);
-      setUserInput('');
-      setShowAnswer(false);
+    if (subtitles.length > 0 && practiceMode === 'dictation') {
+      // Find the current subtitle based on time, or default to 0
+      const timeBasedIndex = subtitles.findIndex(
+        subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
+      );
+      const initialIndex = timeBasedIndex !== -1 ? timeBasedIndex : 0;
+      setCurrentDictationIndex(initialIndex);
     }
-  }, [currentTime, subtitles, currentSubtitleIndex]);
+  }, [subtitles, practiceMode, setCurrentDictationIndex]);
+
+  // Auto-stop functionality when sentence ends
+  useEffect(() => {
+    if (practiceMode === 'dictation' && isPlaying) {
+      const currentSubtitle = subtitles[currentSubtitleIndex];
+      if (currentSubtitle && currentTime >= currentSubtitle.endTime) {
+        setIsPlaying(false);
+      }
+    }
+  }, [currentTime, currentSubtitleIndex, subtitles, isPlaying, practiceMode, setIsPlaying]);
+
+  // Reset input when changing sentences
+  useEffect(() => {
+    setUserInput('');
+    setShowAnswer(false);
+  }, [currentSubtitleIndex]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (practiceMode !== 'dictation') return;
+      
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        handleReplay();
+      } else if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleNextSentence();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [practiceMode, currentSubtitleIndex, subtitles]);
 
   const currentSubtitle = subtitles[currentSubtitleIndex];
-  const isCorrect = userInput.toLowerCase().trim() === currentSubtitle?.text.toLowerCase().trim();
+  const { isCorrect, matchedWords } = currentSubtitle 
+    ? compareTexts(userInput, currentSubtitle.text)
+    : { isCorrect: false, matchedWords: [] };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setUserInput(e.target.value);
@@ -35,17 +81,73 @@ export const DictationMode: React.FC = memo(() => {
   };
 
   const handleNextSentence = () => {
+    // Only allow next if current sentence is completed or answer is shown
+    if (!isCorrect && !showAnswer) {
+      return;
+    }
+    
     if (currentSubtitleIndex < subtitles.length - 1) {
-      const nextSubtitle = subtitles[currentSubtitleIndex + 1];
+      const nextIndex = currentSubtitleIndex + 1;
+      const nextSubtitle = subtitles[nextIndex];
+      
+      setCurrentDictationIndex(nextIndex);
       setCurrentTime(nextSubtitle.startTime);
+      setIsPlaying(true); // Auto-play the next sentence
     }
   };
 
   const handlePreviousSentence = () => {
     if (currentSubtitleIndex > 0) {
-      const prevSubtitle = subtitles[currentSubtitleIndex - 1];
+      const prevIndex = currentSubtitleIndex - 1;
+      const prevSubtitle = subtitles[prevIndex];
+      
+      setCurrentDictationIndex(prevIndex);
       setCurrentTime(prevSubtitle.startTime);
+      setIsPlaying(true); // Auto-play the previous sentence
     }
+  };
+
+  const handleReplay = useCallback(() => {
+    if (currentSubtitle) {
+      setCurrentTime(currentSubtitle.startTime);
+      setIsPlaying(true);
+    }
+  }, [currentSubtitle, setCurrentTime, setIsPlaying]);
+
+  // Create blurred text with gradual reveal
+  const renderBlurredText = () => {
+    if (!currentSubtitle) return null;
+
+    if (showAnswer) {
+      return (
+        <p className="text-lg font-medium text-gray-800">
+          {currentSubtitle.text}
+        </p>
+      );
+    }
+
+    const words = currentSubtitle.text.split(' ');
+
+    return (
+      <p className="text-lg font-medium text-gray-800">
+        {words.map((word, index) => {
+          // Only reveal word if it matches correctly at its position
+          const isRevealed = matchedWords[index] === true;
+          return (
+            <span
+              key={index}
+              className={cn(
+                "transition-all duration-300",
+                isRevealed ? "blur-none" : "blur-sm select-none"
+              )}
+            >
+              {word}
+              {index < words.length - 1 ? ' ' : ''}
+            </span>
+          );
+        })}
+      </p>
+    );
   };
 
   if (!currentSubtitle) {
@@ -58,8 +160,8 @@ export const DictationMode: React.FC = memo(() => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      {/* Current Sentence Display */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+      {/* Current Sentence Display - Reduced margins, removed Playing indicator */}
+      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-500">
             Sentence {currentSubtitleIndex + 1} of {subtitles.length}
@@ -69,51 +171,26 @@ export const DictationMode: React.FC = memo(() => {
           </span>
         </div>
         
-        {isPlaying && (
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-primary-600">Playing...</span>
-          </div>
-        )}
-        
-        <p className="text-lg font-medium text-gray-800 mb-4">
-          {currentSubtitle.text}
-        </p>
+        <div className="mb-2">
+          {renderBlurredText()}
+        </div>
       </div>
 
-      {/* User Input */}
+      {/* User Input - Removed label */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Type what you hear:
-        </label>
         <textarea
           value={userInput}
           onChange={handleInputChange}
           placeholder="Start typing when you hear the sentence..."
           className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-          disabled={isPlaying}
         />
-      </div>
-
-      {/* Feedback */}
-      {userInput && !isPlaying && (
-        <div className="mb-6">
-          {isCorrect ? (
-            <div className="p-3 bg-green-100 border border-green-300 rounded-lg">
-              <p className="text-green-800 font-medium">✓ Correct!</p>
-            </div>
-          ) : (
-            <div className="p-3 bg-red-100 border border-red-300 rounded-lg">
-              <p className="text-red-800 font-medium">✗ Incorrect</p>
-              {showAnswer && (
-                <p className="text-red-700 mt-2">
-                  <strong>Correct answer:</strong> {currentSubtitle.text}
-                </p>
-              )}
-            </div>
+        <div className="mt-2 text-sm text-gray-500">
+          <span className="font-medium">Shortcuts:</span> Tab to replay • Enter to next
+          {!isCorrect && !showAnswer && (
+            <span className="ml-2 text-amber-600">• Complete the sentence to proceed</span>
           )}
         </div>
-      )}
+      </div>
 
       {/* Controls */}
       <div className="flex gap-3">
@@ -131,6 +208,13 @@ export const DictationMode: React.FC = memo(() => {
         </button>
         
         <button
+          onClick={handleReplay}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors duration-200"
+        >
+          Replay
+        </button>
+        
+        <button
           onClick={handleShowAnswer}
           className="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-medium hover:bg-yellow-600 transition-colors duration-200"
         >
@@ -139,10 +223,10 @@ export const DictationMode: React.FC = memo(() => {
         
         <button
           onClick={handleNextSentence}
-          disabled={currentSubtitleIndex === subtitles.length - 1}
+          disabled={currentSubtitleIndex === subtitles.length - 1 || (!isCorrect && !showAnswer)}
           className={cn(
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
-            currentSubtitleIndex === subtitles.length - 1
+            currentSubtitleIndex === subtitles.length - 1 || (!isCorrect && !showAnswer)
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : "bg-primary-500 text-white hover:bg-primary-600"
           )}

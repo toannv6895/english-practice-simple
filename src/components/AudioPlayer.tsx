@@ -17,11 +17,14 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
     duration,
     playbackSpeed,
     volume,
+    practiceMode,
+    subtitles,
     setIsPlaying,
     setCurrentTime,
     setDuration,
     setPlaybackSpeed,
     setVolume,
+    stopAudio,
   } = useAppStore();
 
   // Handle play/pause
@@ -58,9 +61,24 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      const newTime = audioRef.current.currentTime;
+      setCurrentTime(newTime);
+      
+      // Auto-stop in dictation mode when current subtitle ends
+      if (practiceMode === 'dictation' && isPlaying) {
+        const currentSubtitleIndex = subtitles.findIndex(
+          subtitle => newTime >= subtitle.startTime && newTime <= subtitle.endTime
+        );
+        
+        if (currentSubtitleIndex !== -1) {
+          const currentSubtitle = subtitles[currentSubtitleIndex];
+          if (newTime >= currentSubtitle.endTime) {
+            stopAudio();
+          }
+        }
+      }
     }
-  }, [setCurrentTime]);
+  }, [setCurrentTime, practiceMode, isPlaying, subtitles, stopAudio]);
 
   const handleLoadedMetadata = useCallback(() => {
     if (audioRef.current) {

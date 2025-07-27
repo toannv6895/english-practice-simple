@@ -18,6 +18,9 @@ interface AppState {
   // Practice mode state
   practiceMode: PracticeMode;
   
+  // Dictation mode state
+  currentDictationIndex: number;
+  
   // Actions
   setAudioFile: (file: File | null) => void;
   setAudioUrl: (url: string) => void;
@@ -29,10 +32,15 @@ interface AppState {
   setSubtitleFile: (file: File | null) => void;
   setSubtitles: (subtitles: SubtitleEntry[]) => void;
   setPracticeMode: (mode: PracticeMode) => void;
+  setCurrentDictationIndex: (index: number) => void;
   
   // Computed values
   getCurrentSubtitleIndex: () => number;
   getCurrentSubtitle: () => SubtitleEntry | null;
+  
+  // Audio control functions
+  playCurrentSubtitle: () => void;
+  stopAudio: () => void;
   
   // Reset functions
   resetAudio: () => void;
@@ -52,6 +60,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   subtitleFile: null,
   subtitles: [],
   practiceMode: 'listening',
+  currentDictationIndex: 0,
   
   // Actions
   setAudioFile: (file) => set({ audioFile: file }),
@@ -64,6 +73,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSubtitleFile: (file) => set({ subtitleFile: file }),
   setSubtitles: (subtitles) => set({ subtitles }),
   setPracticeMode: (mode) => set({ practiceMode: mode }),
+  setCurrentDictationIndex: (index) => set({ currentDictationIndex: index }),
   
   // Computed values
   getCurrentSubtitleIndex: () => {
@@ -77,6 +87,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { subtitles, getCurrentSubtitleIndex } = get();
     const index = getCurrentSubtitleIndex();
     return index !== -1 ? subtitles[index] : null;
+  },
+  
+  // Audio control functions
+  playCurrentSubtitle: () => {
+    const { getCurrentSubtitle } = get();
+    const currentSubtitle = getCurrentSubtitle();
+    if (currentSubtitle) {
+      set({ currentTime: currentSubtitle.startTime, isPlaying: true });
+    }
+  },
+  
+  stopAudio: () => {
+    set({ isPlaying: false });
   },
   
   // Reset functions
