@@ -3,7 +3,13 @@ import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 
 export const ListeningMode: React.FC = memo(() => {
-  const { subtitles, currentTime, setCurrentTime } = useAppStore();
+  const {
+    subtitles,
+    currentTime,
+    currentSentenceIndex,
+    setCurrentTime,
+    setCurrentSentenceIndex
+  } = useAppStore();
   const getCurrentSubtitleIndex = (): number => {
     return subtitles.findIndex(
       subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
@@ -12,8 +18,9 @@ export const ListeningMode: React.FC = memo(() => {
 
   const currentIndex = getCurrentSubtitleIndex();
 
-  const handleSeekToTime = (time: number) => {
+  const handleSeekToTime = (time: number, index: number) => {
     setCurrentTime(time);
+    setCurrentSentenceIndex(index);
   };
 
   return (
@@ -32,7 +39,7 @@ export const ListeningMode: React.FC = memo(() => {
                 isPast && !isActive && "bg-gray-50 text-gray-600",
                 !isActive && !isPast && "hover:bg-gray-50"
               )}
-              onClick={() => handleSeekToTime(subtitle.startTime)}
+              onClick={() => handleSeekToTime(subtitle.startTime, index)}
             >
               <div className="flex justify-between items-start mb-1">
                 <span className="text-sm text-gray-500">

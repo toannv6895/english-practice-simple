@@ -1,25 +1,27 @@
-import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, memo, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 import { compareTexts } from '../utils/textComparison';
+import { CurrentSentence } from './CurrentSentence';
+import { useGlobalKeyboardShortcuts } from '../hooks/useGlobalKeyboardShortcuts';
 
 export const DictationMode: React.FC = memo(() => {
   const { 
     subtitles, 
     currentTime, 
     isPlaying, 
-    currentDictationIndex,
-    setCurrentTime, 
+    currentSentenceIndex,
+    setCurrentTime,
     setIsPlaying,
-    setCurrentDictationIndex,
+    setCurrentSentenceIndex,
     practiceMode
   } = useAppStore();
   
   const [userInput, setUserInput] = useState('');
   const [showAnswer, setShowAnswer] = useState(false);
 
-  // Use the tracked dictation index instead of calculating from time
-  const currentSubtitleIndex = currentDictationIndex;
+  // Use the tracked sentence index instead of calculating from time
+  const currentSubtitleIndex = currentSentenceIndex;
 
   // Initialize dictation index when component loads
   useEffect(() => {
@@ -29,9 +31,9 @@ export const DictationMode: React.FC = memo(() => {
         subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
       );
       const initialIndex = timeBasedIndex !== -1 ? timeBasedIndex : 0;
-      setCurrentDictationIndex(initialIndex);
+      setCurrentSentenceIndex(initialIndex);
     }
-  }, [subtitles, practiceMode, setCurrentDictationIndex]);
+  }, [subtitles, practiceMode, setCurrentSentenceIndex]);
 
   // Auto-stop functionality when sentence ends
   useEffect(() => {
@@ -61,27 +63,6 @@ export const DictationMode: React.FC = memo(() => {
     ? compareTexts(userInput, currentSubtitle.text)
     : { isCorrect: false, matchedWords: [] };
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (practiceMode !== 'dictation') return;
-      
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        handleReplay();
-      } else if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        // Only proceed to next sentence if current sentence is completed or answer is shown
-        if (isCorrect || showAnswer) {
-          handleNextSentence();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [practiceMode, currentSubtitleIndex, subtitles, isCorrect, showAnswer]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setUserInput(e.target.value);
   };
@@ -100,64 +81,34 @@ export const DictationMode: React.FC = memo(() => {
       const nextIndex = currentSubtitleIndex + 1;
       const nextSubtitle = subtitles[nextIndex];
       
-      setCurrentDictationIndex(nextIndex);
+      setCurrentSentenceIndex(nextIndex);
       setCurrentTime(nextSubtitle.startTime);
       setIsPlaying(true); // Auto-play the next sentence
     }
   };
+
+  // Use global keyboard shortcuts (after function definitions)
+  useGlobalKeyboardShortcuts({
+    canProceedNext: isCorrect || showAnswer,
+    onNext: handleNextSentence
+  });
 
   const handlePreviousSentence = () => {
     if (currentSubtitleIndex > 0) {
       const prevIndex = currentSubtitleIndex - 1;
       const prevSubtitle = subtitles[prevIndex];
       
-      setCurrentDictationIndex(prevIndex);
+      setCurrentSentenceIndex(prevIndex);
       setCurrentTime(prevSubtitle.startTime);
       setIsPlaying(true); // Auto-play the previous sentence
     }
   };
 
-  const handleReplay = useCallback(() => {
+  const handleReplay = () => {
     if (currentSubtitle) {
       setCurrentTime(currentSubtitle.startTime);
       setIsPlaying(true);
     }
-  }, [currentSubtitle, setCurrentTime, setIsPlaying]);
-
-  // Create blurred text with gradual reveal
-  const renderBlurredText = () => {
-    if (!currentSubtitle) return null;
-
-    if (showAnswer) {
-      return (
-        <p className="text-lg font-medium text-gray-800">
-          {currentSubtitle.text}
-        </p>
-      );
-    }
-
-    const words = currentSubtitle.text.split(' ');
-
-    return (
-      <p className="text-lg font-medium text-gray-800">
-        {words.map((word, index) => {
-          // Only reveal word if it matches correctly at its position
-          const isRevealed = matchedWords[index] === true;
-          return (
-            <span
-              key={index}
-              className={cn(
-                "transition-all duration-300",
-                isRevealed ? "blur-none" : "blur-sm select-none"
-              )}
-            >
-              {word}
-              {index < words.length - 1 ? ' ' : ''}
-            </span>
-          );
-        })}
-      </p>
-    );
   };
 
   if (!currentSubtitle) {
@@ -170,21 +121,12 @@ export const DictationMode: React.FC = memo(() => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      {/* Current Sentence Display - Reduced margins, removed Playing indicator */}
-      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-gray-500">
-            Sentence {currentSubtitleIndex + 1} of {subtitles.length}
-          </span>
-          <span className="text-sm text-gray-500">
-            {formatTime(currentSubtitle.startTime)} - {formatTime(currentSubtitle.endTime)}
-          </span>
-        </div>
-        
-        <div className="mb-2">
-          {renderBlurredText()}
-        </div>
-      </div>
+      {/* Current Sentence Display using shared component */}
+      <CurrentSentence
+        showBlurred={true}
+        matchedWords={matchedWords}
+        showAnswer={showAnswer}
+      />
 
       {/* User Input - Removed label */}
       <div className="mb-6">
@@ -250,9 +192,3 @@ export const DictationMode: React.FC = memo(() => {
 });
 
 DictationMode.displayName = 'DictationMode';
-
-function formatTime(time: number): string {
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}

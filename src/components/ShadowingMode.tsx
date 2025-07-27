@@ -2,28 +2,41 @@ import React, { useState, useEffect, useRef, memo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Mic, Play, Square } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { CurrentSentence } from './CurrentSentence';
+import { useGlobalKeyboardShortcuts } from '../hooks/useGlobalKeyboardShortcuts';
 
 export const ShadowingMode: React.FC = memo(() => {
-  const { subtitles, currentTime, isPlaying, setCurrentTime } = useAppStore();
-  const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState(0);
+  const {
+    subtitles,
+    currentTime,
+    isPlaying,
+    currentSentenceIndex,
+    setCurrentTime,
+    setCurrentSentenceIndex,
+    practiceMode
+  } = useAppStore();
   const [recordings, setRecordings] = useState<Record<number, Blob>>({});
   const [isRecording, setIsRecording] = useState(false);
   const [playingRecording, setPlayingRecording] = useState<number | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  const getCurrentSubtitleIndex = (): number => {
-    return subtitles.findIndex(
-      subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
-    );
-  };
-
+  // Initialize sentence index when component loads or when switching to shadowing mode
   useEffect(() => {
-    const newIndex = getCurrentSubtitleIndex();
-    if (newIndex !== -1 && newIndex !== currentSubtitleIndex) {
-      setCurrentSubtitleIndex(newIndex);
+    if (subtitles.length > 0 && practiceMode === 'shadowing') {
+      // Find the current subtitle based on time, or keep current index
+      const timeBasedIndex = subtitles.findIndex(
+        subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
+      );
+      // Only update if we found a valid time-based index and it's different
+      if (timeBasedIndex !== -1 && timeBasedIndex !== currentSentenceIndex) {
+        setCurrentSentenceIndex(timeBasedIndex);
+      }
     }
-  }, [currentTime, subtitles, currentSubtitleIndex]);
+  }, [subtitles, practiceMode, currentTime, currentSentenceIndex, setCurrentSentenceIndex]);
+
+  // Use the shared sentence index
+  const currentSubtitleIndex = currentSentenceIndex;
 
   const startRecording = async () => {
     try {
@@ -40,7 +53,7 @@ export const ShadowingMode: React.FC = memo(() => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         setRecordings(prev => ({
           ...prev,
-          [currentSubtitleIndex]: audioBlob
+          [currentSentenceIndex]: audioBlob
         }));
         stream.getTracks().forEach(track => track.stop());
       };
@@ -85,7 +98,30 @@ export const ShadowingMode: React.FC = memo(() => {
   };
 
   const currentSubtitle = subtitles[currentSubtitleIndex];
-  const hasRecording = recordings[currentSubtitleIndex];
+  const hasRecording = recordings[currentSentenceIndex];
+
+  const handleNextSentence = () => {
+    if (currentSentenceIndex < subtitles.length - 1) {
+      const nextIndex = currentSentenceIndex + 1;
+      const nextSubtitle = subtitles[nextIndex];
+      setCurrentSentenceIndex(nextIndex);
+      setCurrentTime(nextSubtitle.startTime);
+    }
+  };
+
+  const handlePreviousSentence = () => {
+    if (currentSentenceIndex > 0) {
+      const prevIndex = currentSentenceIndex - 1;
+      const prevSubtitle = subtitles[prevIndex];
+      setCurrentSentenceIndex(prevIndex);
+      setCurrentTime(prevSubtitle.startTime);
+    }
+  };
+
+  // Use global keyboard shortcuts
+  useGlobalKeyboardShortcuts({
+    onNext: handleNextSentence
+  });
 
   if (!currentSubtitle) {
     return (
@@ -97,28 +133,10 @@ export const ShadowingMode: React.FC = memo(() => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      {/* Current Sentence Display */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-gray-500">
-            Sentence {currentSubtitleIndex + 1} of {subtitles.length}
-          </span>
-          <span className="text-sm text-gray-500">
-            {formatTime(currentSubtitle.startTime)} - {formatTime(currentSubtitle.endTime)}
-          </span>
-        </div>
-        
-        {isPlaying && (
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-primary-600">Playing...</span>
-          </div>
-        )}
-        
-        <p className="text-lg font-medium text-gray-800 mb-4">
-          {currentSubtitle.text}
-        </p>
-      </div>
+      {/* Current Sentence Display using shared component */}
+      <CurrentSentence
+        showPlayingIndicator={true}
+      />
 
       {/* Recording Controls */}
       <div className="mb-6">
@@ -147,18 +165,18 @@ export const ShadowingMode: React.FC = memo(() => {
           
           {hasRecording && (
             <button
-              onClick={() => playRecording(currentSubtitleIndex)}
-              disabled={playingRecording === currentSubtitleIndex}
+              onClick={() => playRecording(currentSentenceIndex)}
+              disabled={playingRecording === currentSentenceIndex}
               className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors duration-200 disabled:opacity-50"
             >
               <Play size={16} />
-              {playingRecording === currentSubtitleIndex ? 'Playing...' : 'Play Recording'}
+              {playingRecording === currentSentenceIndex ? 'Playing...' : 'Play Recording'}
             </button>
           )}
           
           {hasRecording && (
             <button
-              onClick={() => deleteRecording(currentSubtitleIndex)}
+              onClick={() => deleteRecording(currentSentenceIndex)}
               className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors duration-200"
             >
               Delete
@@ -175,18 +193,13 @@ export const ShadowingMode: React.FC = memo(() => {
       </div>
 
       {/* Navigation */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 mb-6">
         <button
-          onClick={() => {
-            if (currentSubtitleIndex > 0) {
-              const prevSubtitle = subtitles[currentSubtitleIndex - 1];
-              setCurrentTime(prevSubtitle.startTime);
-            }
-          }}
-          disabled={currentSubtitleIndex === 0}
+          onClick={handlePreviousSentence}
+          disabled={currentSentenceIndex === 0}
           className={cn(
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
-            currentSubtitleIndex === 0
+            currentSentenceIndex === 0
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           )}
@@ -195,22 +208,21 @@ export const ShadowingMode: React.FC = memo(() => {
         </button>
         
         <button
-          onClick={() => {
-            if (currentSubtitleIndex < subtitles.length - 1) {
-              const nextSubtitle = subtitles[currentSubtitleIndex + 1];
-              setCurrentTime(nextSubtitle.startTime);
-            }
-          }}
-          disabled={currentSubtitleIndex === subtitles.length - 1}
+          onClick={handleNextSentence}
+          disabled={currentSentenceIndex === subtitles.length - 1}
           className={cn(
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
-            currentSubtitleIndex === subtitles.length - 1
+            currentSentenceIndex === subtitles.length - 1
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : "bg-primary-500 text-white hover:bg-primary-600"
           )}
         >
           Next
         </button>
+        
+        <div className="ml-auto text-sm text-gray-500 flex items-center">
+          <span className="font-medium">Shortcuts:</span> Tab to replay • Enter to next
+        </div>
       </div>
 
       {/* Recordings List */}
@@ -255,9 +267,3 @@ export const ShadowingMode: React.FC = memo(() => {
 });
 
 ShadowingMode.displayName = 'ShadowingMode';
-
-function formatTime(time: number): string {
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}

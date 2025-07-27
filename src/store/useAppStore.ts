@@ -18,8 +18,8 @@ interface AppState {
   // Practice mode state
   practiceMode: PracticeMode;
   
-  // Dictation mode state
-  currentDictationIndex: number;
+  // Shared sentence index for all modes
+  currentSentenceIndex: number;
   
   // Actions
   setAudioFile: (file: File | null) => void;
@@ -32,7 +32,7 @@ interface AppState {
   setSubtitleFile: (file: File | null) => void;
   setSubtitles: (subtitles: SubtitleEntry[]) => void;
   setPracticeMode: (mode: PracticeMode) => void;
-  setCurrentDictationIndex: (index: number) => void;
+  setCurrentSentenceIndex: (index: number) => void;
   
   // Computed values
   getCurrentSubtitleIndex: () => number;
@@ -60,7 +60,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   subtitleFile: null,
   subtitles: [],
   practiceMode: 'listening',
-  currentDictationIndex: 0,
+  currentSentenceIndex: 0,
   
   // Actions
   setAudioFile: (file) => set({ audioFile: file }),
@@ -73,7 +73,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSubtitleFile: (file) => set({ subtitleFile: file }),
   setSubtitles: (subtitles) => set({ subtitles }),
   setPracticeMode: (mode) => set({ practiceMode: mode }),
-  setCurrentDictationIndex: (index) => set({ currentDictationIndex: index }),
+  setCurrentSentenceIndex: (index) => set({ currentSentenceIndex: index }),
   
   // Computed values
   getCurrentSubtitleIndex: () => {
