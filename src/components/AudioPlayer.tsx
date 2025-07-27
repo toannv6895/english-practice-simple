@@ -72,7 +72,7 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
         
         if (currentSubtitleIndex !== -1) {
           const currentSubtitle = subtitles[currentSubtitleIndex];
-          if (newTime >= currentSubtitle.endTime) {
+          if (newTime >= currentSubtitle.endTime - 0.1) { // Add small buffer to prevent premature stopping
             stopAudio();
           }
         }

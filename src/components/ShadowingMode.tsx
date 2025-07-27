@@ -5,6 +5,8 @@ import { cn } from '../utils/cn';
 import { CurrentSentence } from './CurrentSentence';
 import { useGlobalKeyboardShortcuts } from '../hooks/useGlobalKeyboardShortcuts';
 
+type ShadowingModeType = 'sentence' | 'full';
+
 export const ShadowingMode: React.FC = memo(() => {
   const {
     subtitles,
@@ -13,11 +15,14 @@ export const ShadowingMode: React.FC = memo(() => {
     currentSentenceIndex,
     setCurrentTime,
     setCurrentSentenceIndex,
+    setIsPlaying,
+    stopAudio,
     practiceMode
   } = useAppStore();
   const [recordings, setRecordings] = useState<Record<number, Blob>>({});
   const [isRecording, setIsRecording] = useState(false);
   const [playingRecording, setPlayingRecording] = useState<number | null>(null);
+  const [shadowingMode, setShadowingMode] = useState<ShadowingModeType>('full');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -34,6 +39,16 @@ export const ShadowingMode: React.FC = memo(() => {
       }
     }
   }, [subtitles, practiceMode, currentTime, currentSentenceIndex, setCurrentSentenceIndex]);
+
+  // Auto-stop functionality for sentence mode (similar to dictation)
+  useEffect(() => {
+    if (practiceMode === 'shadowing' && shadowingMode === 'sentence' && isPlaying) {
+      const currentSubtitle = subtitles[currentSentenceIndex];
+      if (currentSubtitle && currentTime >= currentSubtitle.endTime - 0.1) {
+        stopAudio();
+      }
+    }
+  }, [currentTime, currentSentenceIndex, subtitles, isPlaying, practiceMode, shadowingMode, stopAudio]);
 
   // Use the shared sentence index
   const currentSubtitleIndex = currentSentenceIndex;
@@ -106,6 +121,10 @@ export const ShadowingMode: React.FC = memo(() => {
       const nextSubtitle = subtitles[nextIndex];
       setCurrentSentenceIndex(nextIndex);
       setCurrentTime(nextSubtitle.startTime);
+      // Auto-play in sentence mode
+      if (shadowingMode === 'sentence') {
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -115,6 +134,10 @@ export const ShadowingMode: React.FC = memo(() => {
       const prevSubtitle = subtitles[prevIndex];
       setCurrentSentenceIndex(prevIndex);
       setCurrentTime(prevSubtitle.startTime);
+      // Auto-play in sentence mode
+      if (shadowingMode === 'sentence') {
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -138,9 +161,10 @@ export const ShadowingMode: React.FC = memo(() => {
         showPlayingIndicator={true}
       />
 
+
       {/* Recording Controls */}
       <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center justify-center gap-4 mb-4">
           <button
             onClick={isRecording ? stopRecording : startRecording}
             className={cn(
@@ -193,35 +217,72 @@ export const ShadowingMode: React.FC = memo(() => {
       </div>
 
       {/* Navigation */}
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={handlePreviousSentence}
-          disabled={currentSentenceIndex === 0}
-          className={cn(
-            "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
-            currentSentenceIndex === 0
-              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          )}
-        >
-          Previous
-        </button>
+      <div className="flex items-center justify-end gap-6 mb-6">
+        {/* Shadowing Mode Radio Buttons */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="radio"
+              id="sentence-mode"
+              name="shadowingMode"
+              checked={shadowingMode === 'sentence'}
+              onChange={() => setShadowingMode('sentence')}
+              className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 focus:ring-primary-500 focus:ring-2"
+            />
+            <label
+              htmlFor="sentence-mode"
+              className="text-sm font-medium text-gray-700 cursor-pointer"
+              title="Audio will automatically stop after each sentence, similar to dictation mode"
+            >
+              Sentence
+            </label>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              type="radio"
+              id="full-mode"
+              name="shadowingMode"
+              checked={shadowingMode === 'full'}
+              onChange={() => setShadowingMode('full')}
+              className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 focus:ring-primary-500 focus:ring-2"
+            />
+            <label
+              htmlFor="full-mode"
+              className="text-sm font-medium text-gray-700 cursor-pointer"
+              title="Audio will play continuously until manually stopped"
+            >
+              Full
+            </label>
+          </div>
+        </div>
         
-        <button
-          onClick={handleNextSentence}
-          disabled={currentSentenceIndex === subtitles.length - 1}
-          className={cn(
-            "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
-            currentSentenceIndex === subtitles.length - 1
-              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-primary-500 text-white hover:bg-primary-600"
-          )}
-        >
-          Next
-        </button>
-        
-        <div className="ml-auto text-sm text-gray-500 flex items-center">
-          <span className="font-medium">Shortcuts:</span> Tab to replay • Enter to next
+        <div className="flex gap-3">
+          <button
+            onClick={handlePreviousSentence}
+            disabled={currentSentenceIndex === 0}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
+              currentSentenceIndex === 0
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            )}
+          >
+            Previous
+          </button>
+          
+          <button
+            onClick={handleNextSentence}
+            disabled={currentSentenceIndex === subtitles.length - 1}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
+              currentSentenceIndex === subtitles.length - 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-primary-500 text-white hover:bg-primary-600"
+            )}
+          >
+            Next
+          </button>
         </div>
       </div>
 
