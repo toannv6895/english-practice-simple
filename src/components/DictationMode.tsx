@@ -1,20 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { SubtitleEntry } from '../types';
+import React, { useState, useEffect, memo } from 'react';
+import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 
-interface DictationModeProps {
-  subtitles: SubtitleEntry[];
-  currentTime: number;
-  onSeekToTime: (time: number) => void;
-  isPlaying: boolean;
-}
-
-export const DictationMode: React.FC<DictationModeProps> = ({
-  subtitles,
-  currentTime,
-  onSeekToTime,
-  isPlaying
-}) => {
+export const DictationMode: React.FC = memo(() => {
+  const { subtitles, currentTime, isPlaying, setCurrentTime } = useAppStore();
   const [userInput, setUserInput] = useState('');
   const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -48,14 +37,14 @@ export const DictationMode: React.FC<DictationModeProps> = ({
   const handleNextSentence = () => {
     if (currentSubtitleIndex < subtitles.length - 1) {
       const nextSubtitle = subtitles[currentSubtitleIndex + 1];
-      onSeekToTime(nextSubtitle.startTime);
+      setCurrentTime(nextSubtitle.startTime);
     }
   };
 
   const handlePreviousSentence = () => {
     if (currentSubtitleIndex > 0) {
       const prevSubtitle = subtitles[currentSubtitleIndex - 1];
-      onSeekToTime(prevSubtitle.startTime);
+      setCurrentTime(prevSubtitle.startTime);
     }
   };
 
@@ -166,10 +155,12 @@ export const DictationMode: React.FC<DictationModeProps> = ({
       </div>
     </div>
   );
-};
+});
+
+DictationMode.displayName = 'DictationMode';
 
 function formatTime(time: number): string {
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-} 
+}

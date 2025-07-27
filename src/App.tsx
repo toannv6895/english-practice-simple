@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, memo } from 'react';
 import { AudioPlayerComponent } from './components/AudioPlayer';
 import { FileUpload } from './components/FileUpload';
 import { Toolbar } from './components/Toolbar';
@@ -6,26 +6,27 @@ import { ListeningMode } from './components/ListeningMode';
 import { DictationMode } from './components/DictationMode';
 import { ShadowingMode } from './components/ShadowingMode';
 import { parseSRT, parseVTT, findSubtitleFile } from './utils/subtitleParser';
-import { SubtitleEntry, PracticeMode } from './types';
+import { useAppStore } from './store/useAppStore';
 import { Headphones, PenTool } from 'lucide-react';
-import { cn } from './utils/cn';
 
-function App() {
-  const [audioFile, setAudioFile] = useState<File | undefined>(undefined);
-  const [subtitleFile, setSubtitleFile] = useState<File | undefined>(undefined);
-  const [audioUrl, setAudioUrl] = useState<string>('');
-  const [subtitles, setSubtitles] = useState<SubtitleEntry[]>([]);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [practiceMode, setPracticeMode] = useState<PracticeMode>('listening');
+const App = memo(() => {
+  const {
+    audioUrl,
+    subtitles,
+    practiceMode,
+    setAudioFile,
+    setAudioUrl,
+    setSubtitles,
+    setSubtitleFile,
+    setCurrentTime,
+  } = useAppStore();
 
   const handleSubtitleFileSelect = useCallback(async (file: File) => {
     setSubtitleFile(file);
     
     try {
       const content = await file.text();
-      let parsedSubtitles: SubtitleEntry[];
+      let parsedSubtitles;
       
       if (file.name.endsWith('.srt')) {
         parsedSubtitles = parseSRT(content);
@@ -40,7 +41,7 @@ function App() {
       console.error('Error parsing subtitle file:', error);
       alert('Error parsing subtitle file. Please check the file format.');
     }
-  }, []);
+  }, [setSubtitleFile, setSubtitles]);
 
   const handleAudioFileSelect = useCallback(async (file: File) => {
     setAudioFile(file);
@@ -69,7 +70,7 @@ function App() {
     } catch (error) {
       console.error('Error auto-detecting subtitle file:', error);
     }
-  }, [handleSubtitleFileSelect]);
+  }, [setAudioFile, setAudioUrl, handleSubtitleFileSelect]);
 
   const handleImportTranscript = useCallback(() => {
     const input = document.createElement('input');
@@ -84,54 +85,19 @@ function App() {
     input.click();
   }, [handleSubtitleFileSelect]);
 
-  const handleTimeUpdate = useCallback((time: number) => {
-    setCurrentTime(time);
-  }, []);
 
-  const handleLoadedMetadata = useCallback((audioDuration: number) => {
-    setDuration(audioDuration);
-  }, []);
-
-  const handlePlayPause = useCallback(() => {
-    setIsPlaying(prev => !prev);
-  }, []);
-
-  const handleSeekToTime = useCallback((time: number) => {
-    setCurrentTime(time);
-  }, []);
-
-  const renderPracticeMode = () => {
+  const renderPracticeMode = useCallback(() => {
     switch (practiceMode) {
       case 'listening':
-        return (
-          <ListeningMode
-            subtitles={subtitles}
-            currentTime={currentTime}
-            onSeekToTime={handleSeekToTime}
-          />
-        );
+        return <ListeningMode />;
       case 'dictation':
-        return (
-          <DictationMode
-            subtitles={subtitles}
-            currentTime={currentTime}
-            onSeekToTime={handleSeekToTime}
-            isPlaying={isPlaying}
-          />
-        );
+        return <DictationMode />;
       case 'shadowing':
-        return (
-          <ShadowingMode
-            subtitles={subtitles}
-            currentTime={currentTime}
-            onSeekToTime={handleSeekToTime}
-            isPlaying={isPlaying}
-          />
-        );
+        return <ShadowingMode />;
       default:
         return null;
     }
-  };
+  }, [practiceMode]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -145,30 +111,16 @@ function App() {
         {!audioUrl && (
           <FileUpload
             onAudioFileSelect={handleAudioFileSelect}
-            selectedAudioFile={audioFile}
           />
         )}
 
         {/* Audio Player - Show when audio is uploaded */}
-        {audioUrl && (
-          <AudioPlayerComponent
-            audioUrl={audioUrl}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            isPlaying={isPlaying}
-            onPlayPause={handlePlayPause}
-            currentTime={currentTime}
-            duration={duration}
-          />
-        )}
+        {audioUrl && <AudioPlayerComponent />}
 
         {/* Toolbar - Show when audio is uploaded */}
         {audioUrl && (
           <Toolbar
-            practiceMode={practiceMode}
-            onPracticeModeChange={setPracticeMode}
             onImportTranscript={handleImportTranscript}
-            hasSubtitles={subtitles.length > 0}
           />
         )}
 
@@ -207,6 +159,8 @@ function App() {
       </div>
     </div>
   );
-}
+});
 
-export default App; 
+App.displayName = 'App';
+
+export default App;

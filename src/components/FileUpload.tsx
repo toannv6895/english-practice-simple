@@ -1,16 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useRef, memo } from 'react';
 import { Upload, FileAudio } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { useAppStore } from '../store/useAppStore';
 
 interface FileUploadProps {
   onAudioFileSelect: (file: File) => void;
-  selectedAudioFile?: File;
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({
-  onAudioFileSelect,
-  selectedAudioFile
-}) => {
+export const FileUpload: React.FC<FileUploadProps> = memo(({ onAudioFileSelect }) => {
+  const { audioFile } = useAppStore();
   const audioInputRef = useRef<HTMLInputElement>(null);
 
   const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,7 +27,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-400 transition-colors duration-200">
             <FileAudio className="mx-auto h-16 w-16 text-gray-400 mb-4" />
             <p className="text-sm text-gray-600 mb-4">
-              {selectedAudioFile ? selectedAudioFile.name : 'No audio file selected'}
+              {audioFile ? audioFile.name : 'No audio file selected'}
             </p>
             <button
               onClick={() => audioInputRef.current?.click()}
@@ -61,4 +58,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       </div>
     </div>
   );
-}; 
+});
+
+FileUpload.displayName = 'FileUpload';

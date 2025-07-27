@@ -1,18 +1,9 @@
-import React from 'react';
-import { SubtitleEntry } from '../types';
+import React, { memo } from 'react';
+import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 
-interface ListeningModeProps {
-  subtitles: SubtitleEntry[];
-  currentTime: number;
-  onSeekToTime: (time: number) => void;
-}
-
-export const ListeningMode: React.FC<ListeningModeProps> = ({
-  subtitles,
-  currentTime,
-  onSeekToTime
-}) => {
+export const ListeningMode: React.FC = memo(() => {
+  const { subtitles, currentTime, setCurrentTime } = useAppStore();
   const getCurrentSubtitleIndex = (): number => {
     return subtitles.findIndex(
       subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
@@ -20,6 +11,10 @@ export const ListeningMode: React.FC<ListeningModeProps> = ({
   };
 
   const currentIndex = getCurrentSubtitleIndex();
+
+  const handleSeekToTime = (time: number) => {
+    setCurrentTime(time);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
@@ -39,7 +34,7 @@ export const ListeningMode: React.FC<ListeningModeProps> = ({
                 isPast && !isActive && "bg-gray-50 text-gray-600",
                 !isActive && !isPast && "hover:bg-gray-50"
               )}
-              onClick={() => onSeekToTime(subtitle.startTime)}
+              onClick={() => handleSeekToTime(subtitle.startTime)}
             >
               <div className="flex justify-between items-start mb-1">
                 <span className="text-sm text-gray-500">
@@ -64,10 +59,12 @@ export const ListeningMode: React.FC<ListeningModeProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ListeningMode.displayName = 'ListeningMode';
 
 function formatTime(time: number): string {
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-} 
+}

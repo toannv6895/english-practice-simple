@@ -1,21 +1,16 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Headphones, PenTool, Mic, Upload } from 'lucide-react';
 import { PracticeMode } from '../types';
+import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 
 interface ToolbarProps {
-  practiceMode: PracticeMode;
-  onPracticeModeChange: (mode: PracticeMode) => void;
   onImportTranscript: () => void;
-  hasSubtitles: boolean;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({
-  practiceMode,
-  onPracticeModeChange,
-  onImportTranscript,
-  hasSubtitles
-}) => {
+export const Toolbar: React.FC<ToolbarProps> = memo(({ onImportTranscript }) => {
+  const { practiceMode, subtitles, setPracticeMode } = useAppStore();
+  const hasSubtitles = subtitles.length > 0;
   const practiceModes: { mode: PracticeMode; label: string; icon: React.ReactNode }[] = [
     { mode: 'listening', label: 'Listening', icon: <Headphones size={20} /> },
     { mode: 'dictation', label: 'Dictation', icon: <PenTool size={20} /> },
@@ -30,7 +25,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           {practiceModes.map(({ mode, label, icon }) => (
             <button
               key={mode}
-              onClick={() => onPracticeModeChange(mode)}
+              onClick={() => setPracticeMode(mode)}
               disabled={!hasSubtitles}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex-1",
@@ -60,4 +55,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       </div>
     </div>
   );
-}; 
+});
+
+Toolbar.displayName = 'Toolbar';

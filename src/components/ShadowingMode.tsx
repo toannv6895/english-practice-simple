@@ -1,21 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { SubtitleEntry } from '../types';
-import { Mic, MicOff, Play, Square } from 'lucide-react';
+import React, { useState, useEffect, useRef, memo } from 'react';
+import { useAppStore } from '../store/useAppStore';
+import { Mic, Play, Square } from 'lucide-react';
 import { cn } from '../utils/cn';
 
-interface ShadowingModeProps {
-  subtitles: SubtitleEntry[];
-  currentTime: number;
-  onSeekToTime: (time: number) => void;
-  isPlaying: boolean;
-}
-
-export const ShadowingMode: React.FC<ShadowingModeProps> = ({
-  subtitles,
-  currentTime,
-  onSeekToTime,
-  isPlaying
-}) => {
+export const ShadowingMode: React.FC = memo(() => {
+  const { subtitles, currentTime, isPlaying, setCurrentTime } = useAppStore();
   const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState(0);
   const [recordings, setRecordings] = useState<Record<number, Blob>>({});
   const [isRecording, setIsRecording] = useState(false);
@@ -194,7 +183,7 @@ export const ShadowingMode: React.FC<ShadowingModeProps> = ({
           onClick={() => {
             if (currentSubtitleIndex > 0) {
               const prevSubtitle = subtitles[currentSubtitleIndex - 1];
-              onSeekToTime(prevSubtitle.startTime);
+              setCurrentTime(prevSubtitle.startTime);
             }
           }}
           disabled={currentSubtitleIndex === 0}
@@ -212,7 +201,7 @@ export const ShadowingMode: React.FC<ShadowingModeProps> = ({
           onClick={() => {
             if (currentSubtitleIndex < subtitles.length - 1) {
               const nextSubtitle = subtitles[currentSubtitleIndex + 1];
-              onSeekToTime(nextSubtitle.startTime);
+              setCurrentTime(nextSubtitle.startTime);
             }
           }}
           disabled={currentSubtitleIndex === subtitles.length - 1}
@@ -266,10 +255,12 @@ export const ShadowingMode: React.FC<ShadowingModeProps> = ({
       )}
     </div>
   );
-};
+});
+
+ShadowingMode.displayName = 'ShadowingMode';
 
 function formatTime(time: number): string {
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-} 
+}

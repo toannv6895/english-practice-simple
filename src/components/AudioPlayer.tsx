@@ -1,78 +1,169 @@
-import React, { useRef, useEffect, useState } from 'react';
-import AudioPlayer from 'react-h5-audio-player';
-import 'react-h5-audio-player/lib/styles.css';
+import React, { useRef, useCallback, memo, useEffect } from 'react';
+import { Play, Pause, Volume2, SkipBack, SkipForward } from 'lucide-react';
+import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
-import './AudioPlayer.css';
 
 interface AudioPlayerProps {
-  audioUrl: string;
-  onTimeUpdate: (currentTime: number) => void;
-  onLoadedMetadata: (duration: number) => void;
-  isPlaying: boolean;
-  onPlayPause: () => void;
-  currentTime: number;
-  duration: number;
+  className?: string;
 }
 
-export const AudioPlayerComponent: React.FC<AudioPlayerProps> = ({
-  audioUrl,
-  onTimeUpdate,
-  onLoadedMetadata,
-  isPlaying,
-  onPlayPause,
-  currentTime,
-  duration
-}) => {
-  const playerRef = useRef<any>(null);
+export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ className }) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  
+  const {
+    audioUrl,
+    isPlaying,
+    currentTime,
+    duration,
+    setIsPlaying,
+    setCurrentTime,
+    setDuration,
+  } = useAppStore();
 
+  // Handle play/pause
   useEffect(() => {
-    if (playerRef.current) {
-      const audio = playerRef.current.audio.current;
-      if (audio) {
-        audio.currentTime = currentTime;
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(console.error);
+      } else {
+        audioRef.current.pause();
       }
+    }
+  }, [isPlaying]);
+
+  // Handle seeking
+  useEffect(() => {
+    if (audioRef.current && Math.abs(audioRef.current.currentTime - currentTime) > 1) {
+      audioRef.current.currentTime = currentTime;
     }
   }, [currentTime]);
 
-  const handleListen = (e: any) => {
-    onTimeUpdate(e.target.currentTime);
-  };
-
-  const handleLoadedMetadata = (e: any) => {
-    onLoadedMetadata(e.target.duration);
-  };
-
-  const handlePlay = () => {
-    if (!isPlaying) {
-      onPlayPause();
+  const handleTimeUpdate = useCallback(() => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
     }
-  };
+  }, [setCurrentTime]);
 
-  const handlePause = () => {
-    if (isPlaying) {
-      onPlayPause();
+  const handleLoadedMetadata = useCallback(() => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
     }
-  };
+  }, [setDuration]);
+
+  const handlePlayPause = useCallback(() => {
+    setIsPlaying(!isPlaying);
+  }, [isPlaying, setIsPlaying]);
+
+  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const seekTime = parseFloat(e.target.value);
+    setCurrentTime(seekTime);
+  }, [setCurrentTime]);
+
+  const handleSkipBackward = useCallback(() => {
+    const newTime = Math.max(0, currentTime - 10);
+    setCurrentTime(newTime);
+  }, [currentTime, setCurrentTime]);
+
+  const handleSkipForward = useCallback(() => {
+    const newTime = Math.min(duration, currentTime + 10);
+    setCurrentTime(newTime);
+  }, [currentTime, duration, setCurrentTime]);
+
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (audioRef.current) {
+      audioRef.current.volume = parseFloat(e.target.value);
+    }
+  }, []);
+
+  const formatTime = useCallback((time: number): string => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }, []);
+
+  if (!audioUrl) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
-      <AudioPlayer
-        ref={playerRef}
+    <div className={cn("bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100", className)}>
+      {/* Hidden HTML5 Audio Element */}
+      <audio
+        ref={audioRef}
         src={audioUrl}
-        onListen={handleListen}
-        onLoadedMetaData={handleLoadedMetadata}
-        onPlay={handlePlay}
-        onPause={handlePause}
-        showJumpControls={false}
-        showFilledProgress={true}
-        showFilledVolume={true}
-        style={{
-          backgroundColor: 'transparent',
-          boxShadow: 'none',
-          borderRadius: '0',
-        }}
-        className="custom-audio-player"
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        preload="metadata"
+        style={{ display: 'none' }}
       />
+
+      {/* Custom Audio Controls */}
+      <div className="flex flex-col space-y-4">
+        {/* Main Controls */}
+        <div className="flex items-center justify-center space-x-4">
+          <button
+            onClick={handleSkipBackward}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+            title="Skip backward 10s"
+          >
+            <SkipBack size={20} className="text-gray-700" />
+          </button>
+          
+          <button
+            onClick={handlePlayPause}
+            className="p-3 rounded-full bg-primary-500 hover:bg-primary-600 text-white transition-colors duration-200 shadow-md"
+          >
+            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+          </button>
+          
+          <button
+            onClick={handleSkipForward}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+            title="Skip forward 10s"
+          >
+            <SkipForward size={20} className="text-gray-700" />
+          </button>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="flex items-center space-x-3">
+          <span className="text-sm text-gray-500 font-medium min-w-[40px]">
+            {formatTime(currentTime)}
+          </span>
+          
+          <div className="flex-1 relative">
+            <input
+              type="range"
+              min={0}
+              max={duration || 0}
+              value={currentTime}
+              onChange={handleSeek}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              style={{
+                background: `linear-gradient(to right, #14b8a6 0%, #14b8a6 ${(currentTime / (duration || 1)) * 100}%, #e5e7eb ${(currentTime / (duration || 1)) * 100}%, #e5e7eb 100%)`
+              }}
+            />
+          </div>
+          
+          <span className="text-sm text-gray-500 font-medium min-w-[40px]">
+            {formatTime(duration)}
+          </span>
+        </div>
+
+        {/* Volume Control */}
+        <div className="flex items-center justify-center space-x-2">
+          <Volume2 size={16} className="text-gray-500" />
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.1}
+            defaultValue={1}
+            className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+            onChange={handleVolumeChange}
+          />
+        </div>
+      </div>
     </div>
   );
-}; 
+});
+
+AudioPlayerComponent.displayName = 'AudioPlayerComponent';
