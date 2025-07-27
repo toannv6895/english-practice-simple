@@ -53,7 +53,7 @@ code {
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  background: #3b82f6;
+  background: #14b8a6;
   height: 16px;
   width: 16px;
   border-radius: 50%;
@@ -67,7 +67,7 @@ code {
 }
 
 .slider::-moz-range-thumb {
-  background: #3b82f6;
+  background: #14b8a6;
   height: 16px;
   width: 16px;
   border-radius: 50%;

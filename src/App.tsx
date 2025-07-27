@@ -1,12 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { AudioPlayer } from './components/AudioPlayer';
+import { AudioPlayerComponent } from './components/AudioPlayer';
 import { FileUpload } from './components/FileUpload';
+import { Toolbar } from './components/Toolbar';
 import { ListeningMode } from './components/ListeningMode';
 import { DictationMode } from './components/DictationMode';
 import { ShadowingMode } from './components/ShadowingMode';
 import { parseSRT, parseVTT, findSubtitleFile } from './utils/subtitleParser';
 import { SubtitleEntry, PracticeMode } from './types';
-import { Headphones, PenTool, Mic } from 'lucide-react';
+import { Headphones, PenTool } from 'lucide-react';
 import { cn } from './utils/cn';
 
 function App() {
@@ -18,27 +19,6 @@ function App() {
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [practiceMode, setPracticeMode] = useState<PracticeMode>('listening');
-
-  const handleAudioFileSelect = useCallback((file: File) => {
-    setAudioFile(file);
-    const url = URL.createObjectURL(file);
-    setAudioUrl(url);
-    
-    // Try to find matching subtitle file
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.onchange = (e) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files) {
-        const subtitleFile = findSubtitleFile(file.name, target.files);
-        if (subtitleFile) {
-          handleSubtitleFileSelect(subtitleFile);
-        }
-      }
-    };
-    input.click();
-  }, []);
 
   const handleSubtitleFileSelect = useCallback(async (file: File) => {
     setSubtitleFile(file);
@@ -62,6 +42,48 @@ function App() {
     }
   }, []);
 
+  const handleAudioFileSelect = useCallback(async (file: File) => {
+    setAudioFile(file);
+    const url = URL.createObjectURL(file);
+    setAudioUrl(url);
+    
+    // Try to auto-detect subtitle file from the same folder
+    try {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = true;
+      input.accept = '.srt,.vtt';
+      
+      input.onchange = (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.files) {
+          const subtitleFile = findSubtitleFile(file.name, target.files);
+          if (subtitleFile) {
+            handleSubtitleFileSelect(subtitleFile);
+          }
+        }
+      };
+      
+      // Auto-trigger file selection for transcript detection
+      input.click();
+    } catch (error) {
+      console.error('Error auto-detecting subtitle file:', error);
+    }
+  }, [handleSubtitleFileSelect]);
+
+  const handleImportTranscript = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.srt,.vtt';
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        handleSubtitleFileSelect(target.files[0]);
+      }
+    };
+    input.click();
+  }, [handleSubtitleFileSelect]);
+
   const handleTimeUpdate = useCallback((time: number) => {
     setCurrentTime(time);
   }, []);
@@ -77,12 +99,6 @@ function App() {
   const handleSeekToTime = useCallback((time: number) => {
     setCurrentTime(time);
   }, []);
-
-  const practiceModes: { mode: PracticeMode; label: string; icon: React.ReactNode }[] = [
-    { mode: 'listening', label: 'Listening', icon: <Headphones size={20} /> },
-    { mode: 'dictation', label: 'Dictation', icon: <PenTool size={20} /> },
-    { mode: 'shadowing', label: 'Shadowing', icon: <Mic size={20} /> }
-  ];
 
   const renderPracticeMode = () => {
     switch (practiceMode) {
@@ -125,17 +141,17 @@ function App() {
           <p className="text-gray-600">Improve your English listening, dictation, and shadowing skills</p>
         </header>
 
-        {/* File Upload */}
-        <FileUpload
-          onAudioFileSelect={handleAudioFileSelect}
-          onSubtitleFileSelect={handleSubtitleFileSelect}
-          selectedAudioFile={audioFile}
-          selectedSubtitleFile={subtitleFile}
-        />
+        {/* File Upload - Only show when no audio is uploaded */}
+        {!audioUrl && (
+          <FileUpload
+            onAudioFileSelect={handleAudioFileSelect}
+            selectedAudioFile={audioFile}
+          />
+        )}
 
-        {/* Audio Player */}
+        {/* Audio Player - Show when audio is uploaded */}
         {audioUrl && (
-          <AudioPlayer
+          <AudioPlayerComponent
             audioUrl={audioUrl}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
@@ -146,30 +162,17 @@ function App() {
           />
         )}
 
-        {/* Practice Mode Tabs */}
-        {audioUrl && subtitles.length > 0 && (
-          <div className="mb-6">
-            <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-lg">
-              {practiceModes.map(({ mode, label, icon }) => (
-                <button
-                  key={mode}
-                  onClick={() => setPracticeMode(mode)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex-1",
-                    practiceMode === mode
-                      ? "bg-primary-500 text-white shadow-sm"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  )}
-                >
-                  {icon}
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Toolbar - Show when audio is uploaded */}
+        {audioUrl && (
+          <Toolbar
+            practiceMode={practiceMode}
+            onPracticeModeChange={setPracticeMode}
+            onImportTranscript={handleImportTranscript}
+            hasSubtitles={subtitles.length > 0}
+          />
         )}
 
-        {/* Practice Mode Content */}
+        {/* Practice Mode Content - Show when audio and subtitles are available */}
         {audioUrl && subtitles.length > 0 && renderPracticeMode()}
 
         {/* No Files Message */}
@@ -194,9 +197,9 @@ function App() {
               <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <PenTool size={24} className="text-yellow-600" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Subtitles Found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Transcript Found</h3>
               <p className="text-gray-600">
-                Upload a subtitle file (.srt or .vtt) to enable practice modes.
+                Use the "Import Transcript" button in the toolbar to add a subtitle file (.srt or .vtt) to enable practice modes.
               </p>
             </div>
           </div>
