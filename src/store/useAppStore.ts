@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { SubtitleEntry, PracticeMode } from '../types';
 
+type ShadowingModeType = 'sentence' | 'full';
+
 interface AppState {
   // Audio state
   audioFile: File | null;
@@ -17,6 +19,7 @@ interface AppState {
   
   // Practice mode state
   practiceMode: PracticeMode;
+  shadowingMode: ShadowingModeType;
   
   // Shared sentence index for all modes
   currentSentenceIndex: number;
@@ -32,6 +35,7 @@ interface AppState {
   setSubtitleFile: (file: File | null) => void;
   setSubtitles: (subtitles: SubtitleEntry[]) => void;
   setPracticeMode: (mode: PracticeMode) => void;
+  setShadowingMode: (mode: ShadowingModeType) => void;
   setCurrentSentenceIndex: (index: number) => void;
   
   // Computed values
@@ -60,6 +64,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   subtitleFile: null,
   subtitles: [],
   practiceMode: 'listening',
+  shadowingMode: 'full',
   currentSentenceIndex: 0,
   
   // Actions
@@ -73,6 +78,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSubtitleFile: (file) => set({ subtitleFile: file }),
   setSubtitles: (subtitles) => set({ subtitles }),
   setPracticeMode: (mode) => set({ practiceMode: mode }),
+  setShadowingMode: (mode) => set({ shadowingMode: mode }),
   setCurrentSentenceIndex: (index) => set({ currentSentenceIndex: index }),
   
   // Computed values
@@ -129,5 +135,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     subtitleFile: null,
     subtitles: [],
     practiceMode: 'listening',
+    shadowingMode: 'full',
   }),
 }));

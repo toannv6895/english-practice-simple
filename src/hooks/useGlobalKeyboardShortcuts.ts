@@ -7,12 +7,15 @@ interface UseGlobalKeyboardShortcutsProps {
   // Custom handlers
   onReplay?: () => void;
   onNext?: () => void;
+  // For shadowing mode - space key to start/stop recording
+  onToggleRecording?: () => void;
 }
 
 export const useGlobalKeyboardShortcuts = ({
   canProceedNext = true,
   onReplay,
-  onNext
+  onNext,
+  onToggleRecording
 }: UseGlobalKeyboardShortcutsProps = {}) => {
   const {
     practiceMode,
@@ -77,6 +80,14 @@ export const useGlobalKeyboardShortcuts = ({
           defaultNext();
         }
       }
+      
+      // Space key - Toggle recording (for shadowing mode only)
+      else if (e.key === ' ' && practiceMode === 'shadowing') {
+        e.preventDefault();
+        if (onToggleRecording) {
+          onToggleRecording();
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -86,6 +97,7 @@ export const useGlobalKeyboardShortcuts = ({
     canProceedNext,
     onReplay,
     onNext,
+    onToggleRecording,
     defaultReplay,
     defaultNext
   ]);

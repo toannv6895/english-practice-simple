@@ -5,24 +5,23 @@ import { cn } from '../utils/cn';
 import { CurrentSentence } from './CurrentSentence';
 import { useGlobalKeyboardShortcuts } from '../hooks/useGlobalKeyboardShortcuts';
 
-type ShadowingModeType = 'sentence' | 'full';
-
 export const ShadowingMode: React.FC = memo(() => {
   const {
     subtitles,
     currentTime,
     isPlaying,
     currentSentenceIndex,
+    shadowingMode,
     setCurrentTime,
     setCurrentSentenceIndex,
     setIsPlaying,
+    setShadowingMode,
     stopAudio,
     practiceMode
   } = useAppStore();
   const [recordings, setRecordings] = useState<Record<number, Blob>>({});
   const [isRecording, setIsRecording] = useState(false);
   const [playingRecording, setPlayingRecording] = useState<number | null>(null);
-  const [shadowingMode, setShadowingMode] = useState<ShadowingModeType>('full');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -88,6 +87,14 @@ export const ShadowingMode: React.FC = memo(() => {
     }
   };
 
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   const playRecording = (index: number) => {
     const recording = recordings[index];
     if (recording) {
@@ -143,7 +150,8 @@ export const ShadowingMode: React.FC = memo(() => {
 
   // Use global keyboard shortcuts
   useGlobalKeyboardShortcuts({
-    onNext: handleNextSentence
+    onNext: handleNextSentence,
+    onToggleRecording: toggleRecording
   });
 
   if (!currentSubtitle) {
