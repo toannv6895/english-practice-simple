@@ -75,17 +75,51 @@ function parseTime(timeString: string): number {
 }
 
 export function findSubtitleFile(audioFileName: string, files: FileList): File | null {
-  const baseName = audioFileName.replace(/\.[^/.]+$/, '');
+  const baseName = audioFileName.replace(/\.[^/.]+$/, '').toLowerCase();
   
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const fileName = file.name.toLowerCase();
+    const fileBaseName = fileName.replace(/\.[^/.]+$/, '');
     
-    if ((fileName.endsWith('.srt') || fileName.endsWith('.vtt')) && 
-        fileName.startsWith(baseName.toLowerCase())) {
+    if ((fileName.endsWith('.srt') || fileName.endsWith('.vtt')) &&
+        fileBaseName === baseName) {
       return file;
     }
   }
   
   return null;
-} 
+}
+
+export function createAutoDetectInput(audioFileName: string, onSubtitleFound: (file: File) => void): void {
+  const baseName = audioFileName.replace(/\.[^/.]+$/, '');
+  
+  // Create file input for auto-detection
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.multiple = true;
+  input.accept = '.srt,.vtt';
+  input.style.display = 'none';
+  
+  input.onchange = (e) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files) {
+      const subtitleFile = findSubtitleFile(audioFileName, target.files);
+      if (subtitleFile) {
+        onSubtitleFound(subtitleFile);
+      }
+    }
+    // Clean up
+    if (input.parentNode) {
+      input.parentNode.removeChild(input);
+    }
+  };
+  
+  // Add to DOM temporarily and trigger
+  document.body.appendChild(input);
+  
+  // Add a delay to prevent dialog from appearing immediately after audio selection
+  setTimeout(() => {
+    input.click();
+  }, 1000);
+}

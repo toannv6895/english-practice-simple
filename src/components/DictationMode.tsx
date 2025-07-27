@@ -51,7 +51,6 @@ export const DictationMode: React.FC = memo(() => {
   if (!currentSubtitle) {
     return (
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">Dictation Mode</h2>
         <p className="text-gray-600">No subtitle available for current time.</p>
       </div>
     );
@@ -59,8 +58,6 @@ export const DictationMode: React.FC = memo(() => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">Dictation Mode</h2>
-      
       {/* Current Sentence Display */}
       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
         <div className="flex justify-between items-center mb-2">

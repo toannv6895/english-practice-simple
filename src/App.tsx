@@ -5,7 +5,7 @@ import { Toolbar } from './components/Toolbar';
 import { ListeningMode } from './components/ListeningMode';
 import { DictationMode } from './components/DictationMode';
 import { ShadowingMode } from './components/ShadowingMode';
-import { parseSRT, parseVTT, findSubtitleFile } from './utils/subtitleParser';
+import { parseSRT, parseVTT, createAutoDetectInput } from './utils/subtitleParser';
 import { useAppStore } from './store/useAppStore';
 import { Headphones, PenTool } from 'lucide-react';
 
@@ -48,28 +48,8 @@ const App = memo(() => {
     const url = URL.createObjectURL(file);
     setAudioUrl(url);
     
-    // Try to auto-detect subtitle file from the same folder
-    try {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.multiple = true;
-      input.accept = '.srt,.vtt';
-      
-      input.onchange = (e) => {
-        const target = e.target as HTMLInputElement;
-        if (target.files) {
-          const subtitleFile = findSubtitleFile(file.name, target.files);
-          if (subtitleFile) {
-            handleSubtitleFileSelect(subtitleFile);
-          }
-        }
-      };
-      
-      // Auto-trigger file selection for transcript detection
-      input.click();
-    } catch (error) {
-      console.error('Error auto-detecting subtitle file:', error);
-    }
+    // Try to auto-detect subtitle file with same name
+    createAutoDetectInput(file.name, handleSubtitleFileSelect);
   }, [setAudioFile, setAudioUrl, handleSubtitleFileSelect]);
 
   const handleImportTranscript = useCallback(() => {
@@ -102,11 +82,6 @@ const App = memo(() => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">English Practice</h1>
-          <p className="text-gray-600">Improve your English listening, dictation, and shadowing skills</p>
-        </header>
-
         {/* File Upload - Only show when no audio is uploaded */}
         {!audioUrl && (
           <FileUpload

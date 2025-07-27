@@ -18,8 +18,6 @@ export const ListeningMode: React.FC = memo(() => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">Listening Mode</h2>
-      
       <div className="max-h-96 overflow-y-auto">
         {subtitles.map((subtitle, index) => {
           const isActive = index === currentIndex;

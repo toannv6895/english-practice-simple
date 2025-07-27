@@ -42,6 +42,7 @@ code {
   appearance: none;
   background: transparent;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .slider::-webkit-slider-track {
@@ -54,10 +55,23 @@ code {
   -webkit-appearance: none;
   appearance: none;
   background: #14b8a6;
-  height: 16px;
-  width: 16px;
+  height: 18px;
+  width: 18px;
   border-radius: 50%;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: #0f9488;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.slider::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
 }
 
 .slider::-moz-range-track {
@@ -68,9 +82,27 @@ code {
 
 .slider::-moz-range-thumb {
   background: #14b8a6;
-  height: 16px;
-  width: 16px;
+  height: 18px;
+  width: 18px;
   border-radius: 50%;
   cursor: pointer;
   border: none;
-} 
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slider::-moz-range-thumb:hover {
+  background: #0f9488;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.slider::-moz-range-thumb:active {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
+}
+
+/* Smooth progress update animation */
+.slider:not(:active) {
+  transition: background 0.1s ease;
+}

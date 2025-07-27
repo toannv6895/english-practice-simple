@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, memo, useEffect } from 'react';
-import { Play, Pause, Volume2, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Volume2, SkipBack, SkipForward, Rewind, FastForward } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 
@@ -15,9 +15,13 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
     isPlaying,
     currentTime,
     duration,
+    playbackSpeed,
+    volume,
     setIsPlaying,
     setCurrentTime,
     setDuration,
+    setPlaybackSpeed,
+    setVolume,
   } = useAppStore();
 
   // Handle play/pause
@@ -30,6 +34,20 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
       }
     }
   }, [isPlaying]);
+
+  // Handle playback speed changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed]);
+
+  // Handle volume changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   // Handle seeking
   useEffect(() => {
@@ -69,11 +87,24 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
     setCurrentTime(newTime);
   }, [currentTime, duration, setCurrentTime]);
 
+  const handleBack5s = useCallback(() => {
+    const newTime = Math.max(0, currentTime - 5);
+    setCurrentTime(newTime);
+  }, [currentTime, setCurrentTime]);
+
+  const handleForward5s = useCallback(() => {
+    const newTime = Math.min(duration, currentTime + 5);
+    setCurrentTime(newTime);
+  }, [currentTime, duration, setCurrentTime]);
+
+  const handleSpeedChange = useCallback((speed: number) => {
+    setPlaybackSpeed(speed);
+  }, [setPlaybackSpeed]);
+
   const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (audioRef.current) {
-      audioRef.current.volume = parseFloat(e.target.value);
-    }
-  }, []);
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+  }, [setVolume]);
 
   const formatTime = useCallback((time: number): string => {
     const minutes = Math.floor(time / 60);
@@ -98,13 +129,21 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
       {/* Custom Audio Controls */}
       <div className="flex flex-col space-y-4">
         {/* Main Controls */}
-        <div className="flex items-center justify-center space-x-4">
+        <div className="flex items-center justify-center space-x-2">
           <button
             onClick={handleSkipBackward}
             className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
             title="Skip backward 10s"
           >
-            <SkipBack size={20} className="text-gray-700" />
+            <SkipBack size={18} className="text-gray-700" />
+          </button>
+          
+          <button
+            onClick={handleBack5s}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+            title="Back 5s"
+          >
+            <Rewind size={18} className="text-gray-700" />
           </button>
           
           <button
@@ -115,11 +154,19 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
           </button>
           
           <button
+            onClick={handleForward5s}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+            title="Forward 5s"
+          >
+            <FastForward size={18} className="text-gray-700" />
+          </button>
+          
+          <button
             onClick={handleSkipForward}
             className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
             title="Skip forward 10s"
           >
-            <SkipForward size={20} className="text-gray-700" />
+            <SkipForward size={18} className="text-gray-700" />
           </button>
         </div>
 
@@ -148,18 +195,45 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
           </span>
         </div>
 
-        {/* Volume Control */}
-        <div className="flex items-center justify-center space-x-2">
-          <Volume2 size={16} className="text-gray-500" />
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.1}
-            defaultValue={1}
-            className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-            onChange={handleVolumeChange}
-          />
+        {/* Volume and Speed Controls */}
+        <div className="flex items-center justify-between space-x-4">
+          {/* Volume Control */}
+          <div className="flex items-center space-x-2">
+            <Volume2 size={16} className="text-gray-500" />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.1}
+              value={volume}
+              className="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              onChange={handleVolumeChange}
+              style={{
+                background: `linear-gradient(to right, #14b8a6 0%, #14b8a6 ${volume * 100}%, #e5e7eb ${volume * 100}%, #e5e7eb 100%)`
+              }}
+            />
+          </div>
+
+          {/* Speed Control */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500 font-medium">Speed:</span>
+            <div className="flex space-x-1">
+              {[0.25, 0.5, 0.75, 1].map((speed) => (
+                <button
+                  key={speed}
+                  onClick={() => handleSpeedChange(speed)}
+                  className={cn(
+                    "px-2 py-1 text-xs rounded transition-colors duration-200",
+                    playbackSpeed === speed
+                      ? "bg-primary-500 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  )}
+                >
+                  {speed}x
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

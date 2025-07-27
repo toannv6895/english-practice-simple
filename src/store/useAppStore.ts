@@ -8,6 +8,8 @@ interface AppState {
   isPlaying: boolean;
   currentTime: number;
   duration: number;
+  playbackSpeed: number;
+  volume: number;
   
   // Subtitle state
   subtitleFile: File | null;
@@ -22,6 +24,8 @@ interface AppState {
   setIsPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
   setDuration: (duration: number) => void;
+  setPlaybackSpeed: (speed: number) => void;
+  setVolume: (volume: number) => void;
   setSubtitleFile: (file: File | null) => void;
   setSubtitles: (subtitles: SubtitleEntry[]) => void;
   setPracticeMode: (mode: PracticeMode) => void;
@@ -43,6 +47,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   isPlaying: false,
   currentTime: 0,
   duration: 0,
+  playbackSpeed: 1,
+  volume: 1,
   subtitleFile: null,
   subtitles: [],
   practiceMode: 'listening',
@@ -53,6 +59,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setIsPlaying: (playing) => set({ isPlaying: playing }),
   setCurrentTime: (time) => set({ currentTime: time }),
   setDuration: (duration) => set({ duration }),
+  setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
+  setVolume: (volume) => set({ volume }),
   setSubtitleFile: (file) => set({ subtitleFile: file }),
   setSubtitles: (subtitles) => set({ subtitles }),
   setPracticeMode: (mode) => set({ practiceMode: mode }),
@@ -78,6 +86,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     isPlaying: false,
     currentTime: 0,
     duration: 0,
+    playbackSpeed: 1,
+    volume: 1,
   }),
   
   resetSubtitles: () => set({
@@ -91,6 +101,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     isPlaying: false,
     currentTime: 0,
     duration: 0,
+    playbackSpeed: 1,
+    volume: 1,
     subtitleFile: null,
     subtitles: [],
     practiceMode: 'listening',
