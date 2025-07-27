@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useCallback } from 'react';
+import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 import { compareTexts } from '../utils/textComparison';
@@ -43,11 +43,23 @@ export const DictationMode: React.FC = memo(() => {
     }
   }, [currentTime, currentSubtitleIndex, subtitles, isPlaying, practiceMode, setIsPlaying]);
 
-  // Reset input when changing sentences
+  // Reset input when changing sentences and auto-focus
   useEffect(() => {
     setUserInput('');
     setShowAnswer(false);
+    // Auto-focus input when changing sentences
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   }, [currentSubtitleIndex]);
+
+  // Add ref for input focus
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const currentSubtitle = subtitles[currentSubtitleIndex];
+  const { isCorrect, matchedWords } = currentSubtitle
+    ? compareTexts(userInput, currentSubtitle.text)
+    : { isCorrect: false, matchedWords: [] };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -59,18 +71,16 @@ export const DictationMode: React.FC = memo(() => {
         handleReplay();
       } else if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        handleNextSentence();
+        // Only proceed to next sentence if current sentence is completed or answer is shown
+        if (isCorrect || showAnswer) {
+          handleNextSentence();
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [practiceMode, currentSubtitleIndex, subtitles]);
-
-  const currentSubtitle = subtitles[currentSubtitleIndex];
-  const { isCorrect, matchedWords } = currentSubtitle 
-    ? compareTexts(userInput, currentSubtitle.text)
-    : { isCorrect: false, matchedWords: [] };
+  }, [practiceMode, currentSubtitleIndex, subtitles, isCorrect, showAnswer]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setUserInput(e.target.value);
@@ -179,6 +189,7 @@ export const DictationMode: React.FC = memo(() => {
       {/* User Input - Removed label */}
       <div className="mb-6">
         <textarea
+          ref={inputRef}
           value={userInput}
           onChange={handleInputChange}
           placeholder="Start typing when you hear the sentence..."

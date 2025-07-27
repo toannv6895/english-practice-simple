@@ -106,3 +106,7 @@ code {
 .slider:not(:active) {
   transition: background 0.1s ease;
 }
+
+textarea {
+  outline-width: 0px;
+}
