@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Mic, Play, Square, Download, RotateCcw } from 'lucide-react';
+import { Mic, Play, Square, Download, RotateCcw, Volume2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { CurrentSentence } from './CurrentSentence';
 import { useGlobalKeyboardShortcuts } from '../hooks/useGlobalKeyboardShortcuts';
@@ -162,6 +162,13 @@ export const ShadowingMode: React.FC = memo(() => {
     }
   };
 
+  const replayCurrentSentence = () => {
+    if (currentSubtitle) {
+      setCurrentTime(currentSubtitle.startTime);
+      setIsPlaying(true);
+    }
+  };
+
   // Use global keyboard shortcuts
   useGlobalKeyboardShortcuts({
     onNext: handleNextSentence,
@@ -190,7 +197,7 @@ export const ShadowingMode: React.FC = memo(() => {
           <button
             onClick={isRecording ? stopRecording : startRecording}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors duration-200",
+              "flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors duration-200",
               isRecording
                 ? "bg-red-500 text-white hover:bg-red-600"
                 : hasRecording
@@ -200,21 +207,54 @@ export const ShadowingMode: React.FC = memo(() => {
           >
             {isRecording ? (
               <>
-                <Square size={16} />
+                <Square size={20} />
                 Stop Recording
               </>
             ) : hasRecording ? (
               <>
-                <RotateCcw size={16} />
-                Try Again
+                <RotateCcw size={20} />
               </>
             ) : (
               <>
-                <Mic size={16} />
+                <Mic size={20} />
                 Start Recording
               </>
             )}
           </button>
+           
+          {hasRecording && !isRecording && (
+            <div className="flex gap-2">
+              <button
+                onClick={replayCurrentSentence}
+                className="p-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200"
+                title="Replay current sentence"
+              >
+                <Volume2 size={20} />
+              </button>
+              <button
+                onClick={() => playRecording(currentSentenceIndex)}
+                disabled={playingRecording === currentSentenceIndex}
+                className="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 disabled:opacity-50"
+                title="Play recording"
+              >
+                <Play size={20} />
+              </button>
+              <button
+                onClick={() => downloadRecording(currentSentenceIndex)}
+                className="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                title="Download recording"
+              >
+                <Download size={20} />
+              </button>
+              <button
+                onClick={() => deleteRecording(currentSentenceIndex)}
+                className="p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
+                title="Delete recording"
+              >
+                <Square size={20} />
+              </button>
+            </div>
+          )}
         </div>
         
         {isRecording && (
@@ -295,52 +335,7 @@ export const ShadowingMode: React.FC = memo(() => {
         </div>
       </div>
 
-      {/* Recordings List */}
-      {Object.keys(recordings).length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-lg font-medium text-gray-800 mb-3">Your Recordings</h3>
-          <div className="space-y-2">
-            {Object.entries(recordings).map(([index, recording]) => {
-              const subtitleIndex = parseInt(index);
-              const subtitle = subtitles[subtitleIndex];
-              return (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">
-                      Sentence {subtitleIndex + 1}
-                    </p>
-                    <p className="text-xs text-gray-600">{subtitle.text}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => playRecording(subtitleIndex)}
-                      disabled={playingRecording === subtitleIndex}
-                      className="p-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors duration-200 disabled:opacity-50"
-                      title="Play recording"
-                    >
-                      <Play size={14} />
-                    </button>
-                    <button
-                      onClick={() => downloadRecording(subtitleIndex)}
-                      className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-200"
-                      title="Download recording"
-                    >
-                      <Download size={14} />
-                    </button>
-                    <button
-                      onClick={() => deleteRecording(subtitleIndex)}
-                      className="p-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-200"
-                      title="Delete recording"
-                    >
-                      <Square size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Recordings List - Removed as requested */}
     </div>
   );
 });
