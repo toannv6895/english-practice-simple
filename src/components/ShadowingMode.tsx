@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Mic, Play, Square } from 'lucide-react';
+import { Mic, Play, Square, Download, RotateCcw } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { CurrentSentence } from './CurrentSentence';
 import { useGlobalKeyboardShortcuts } from '../hooks/useGlobalKeyboardShortcuts';
@@ -119,6 +119,20 @@ export const ShadowingMode: React.FC = memo(() => {
     });
   };
 
+  const downloadRecording = (index: number) => {
+    const recording = recordings[index];
+    if (recording) {
+      const url = URL.createObjectURL(recording);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `recording-sentence-${index + 1}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  };
+
   const currentSubtitle = subtitles[currentSubtitleIndex];
   const hasRecording = recordings[currentSentenceIndex];
 
@@ -179,6 +193,8 @@ export const ShadowingMode: React.FC = memo(() => {
               "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors duration-200",
               isRecording
                 ? "bg-red-500 text-white hover:bg-red-600"
+                : hasRecording
+                ? "bg-amber-500 text-white hover:bg-amber-600"
                 : "bg-primary-500 text-white hover:bg-primary-600"
             )}
           >
@@ -187,6 +203,11 @@ export const ShadowingMode: React.FC = memo(() => {
                 <Square size={16} />
                 Stop Recording
               </>
+            ) : hasRecording ? (
+              <>
+                <RotateCcw size={16} />
+                Try Again
+              </>
             ) : (
               <>
                 <Mic size={16} />
@@ -194,26 +215,6 @@ export const ShadowingMode: React.FC = memo(() => {
               </>
             )}
           </button>
-          
-          {hasRecording && (
-            <button
-              onClick={() => playRecording(currentSentenceIndex)}
-              disabled={playingRecording === currentSentenceIndex}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors duration-200 disabled:opacity-50"
-            >
-              <Play size={16} />
-              {playingRecording === currentSentenceIndex ? 'Playing...' : 'Play Recording'}
-            </button>
-          )}
-          
-          {hasRecording && (
-            <button
-              onClick={() => deleteRecording(currentSentenceIndex)}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors duration-200"
-            >
-              Delete
-            </button>
-          )}
         </div>
         
         {isRecording && (
@@ -315,12 +316,21 @@ export const ShadowingMode: React.FC = memo(() => {
                       onClick={() => playRecording(subtitleIndex)}
                       disabled={playingRecording === subtitleIndex}
                       className="p-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors duration-200 disabled:opacity-50"
+                      title="Play recording"
                     >
                       <Play size={14} />
                     </button>
                     <button
+                      onClick={() => downloadRecording(subtitleIndex)}
+                      className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-200"
+                      title="Download recording"
+                    >
+                      <Download size={14} />
+                    </button>
+                    <button
                       onClick={() => deleteRecording(subtitleIndex)}
                       className="p-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-200"
+                      title="Delete recording"
                     >
                       <Square size={14} />
                     </button>
