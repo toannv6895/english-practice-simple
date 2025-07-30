@@ -1,12 +1,14 @@
-import React, { useCallback, memo } from 'react';
+import React, { useCallback, memo, useState } from 'react';
 import { AudioPlayerComponent } from './components/AudioPlayer';
 import { FileUpload } from './components/FileUpload';
 import { Toolbar } from './components/Toolbar';
 import { ListeningMode } from './components/ListeningMode';
 import { DictationMode } from './components/DictationMode';
 import { ShadowingMode } from './components/ShadowingMode';
+import { TranscriptRegenerator } from './components/TranscriptRegenerator';
 import { parseSRT, parseVTT, createAutoDetectInput } from './utils/subtitleParser';
 import { useAppStore } from './store/useAppStore';
+import { SubtitleEntry } from './types';
 import { Headphones, PenTool } from 'lucide-react';
 
 const App = memo(() => {
@@ -20,6 +22,7 @@ const App = memo(() => {
     setSubtitleFile,
     setCurrentTime,
   } = useAppStore();
+  const [showRegenerator, setShowRegenerator] = useState(false);
 
   const handleSubtitleFileSelect = useCallback(async (file: File) => {
     setSubtitleFile(file);
@@ -65,6 +68,15 @@ const App = memo(() => {
     input.click();
   }, [handleSubtitleFileSelect]);
 
+  const handleRegenerateTranscript = useCallback((regeneratedSubtitles: SubtitleEntry[]) => {
+    setSubtitles(regeneratedSubtitles);
+    setShowRegenerator(false);
+  }, [setSubtitles]);
+
+  const handleOpenRegenerator = useCallback(() => {
+    setShowRegenerator(true);
+  }, []);
+
 
   const renderPracticeMode = useCallback(() => {
     switch (practiceMode) {
@@ -96,6 +108,7 @@ const App = memo(() => {
         {audioUrl && (
           <Toolbar
             onImportTranscript={handleImportTranscript}
+            onRegenerateTranscript={subtitles.length > 0 ? handleOpenRegenerator : undefined}
           />
         )}
 
@@ -130,6 +143,15 @@ const App = memo(() => {
               </p>
             </div>
           </div>
+        )}
+
+        {/* Transcript Regenerator Modal */}
+        {showRegenerator && (
+          <TranscriptRegenerator
+            originalSubtitles={subtitles}
+            onRegenerate={handleRegenerateTranscript}
+            onCancel={() => setShowRegenerator(false)}
+          />
         )}
       </div>
     </div>

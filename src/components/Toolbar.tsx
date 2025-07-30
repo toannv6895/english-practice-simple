@@ -1,14 +1,15 @@
 import React, { memo } from 'react';
-import { Headphones, PenTool, Mic, Upload } from 'lucide-react';
+import { Headphones, PenTool, Mic, Upload, RefreshCw } from 'lucide-react';
 import { PracticeMode } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 
 interface ToolbarProps {
   onImportTranscript: () => void;
+  onRegenerateTranscript?: () => void;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = memo(({ onImportTranscript }) => {
+export const Toolbar: React.FC<ToolbarProps> = memo(({ onImportTranscript, onRegenerateTranscript }) => {
   const { practiceMode, subtitles, setPracticeMode } = useAppStore();
   const hasSubtitles = subtitles.length > 0;
   const practiceModes: { mode: PracticeMode; label: string; icon: React.ReactNode }[] = [
@@ -42,8 +43,18 @@ export const Toolbar: React.FC<ToolbarProps> = memo(({ onImportTranscript }) => 
           ))}
         </div>
 
-        {/* Import Transcript Button */}
-        <div className="ml-4">
+        {/* Transcript Actions */}
+        <div className="ml-4 flex space-x-2">
+          {onRegenerateTranscript && hasSubtitles && (
+            <button
+              onClick={onRegenerateTranscript}
+              className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md text-sm font-medium transition-all duration-200 shadow-sm"
+              title="Regenerate transcript with optimized formatting"
+            >
+              <RefreshCw size={16} />
+              Regenerate
+            </button>
+          )}
           <button
             onClick={onImportTranscript}
             className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md text-sm font-medium transition-all duration-200 shadow-sm"
