@@ -19,9 +19,12 @@ export const ShadowingMode: React.FC = memo(() => {
     stopAudio,
     practiceMode
   } = useAppStore();
-  const [recordings, setRecordings] = useState<Record<number, Blob>>({});
+  
+  // Separate storage for sentence and full mode recordings
+  const [sentenceRecordings, setSentenceRecordings] = useState<Record<number, Blob>>({});
+  const [fullRecording, setFullRecording] = useState<Blob | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [playingRecording, setPlayingRecording] = useState<number | null>(null);
+  const [playingRecording, setPlayingRecording] = useState<number | 'full' | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -65,10 +68,16 @@ export const ShadowingMode: React.FC = memo(() => {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        setRecordings(prev => ({
-          ...prev,
-          [currentSentenceIndex]: audioBlob
-        }));
+        
+        if (shadowingMode === 'sentence') {
+          setSentenceRecordings(prev => ({
+            ...prev,
+            [currentSentenceIndex]: audioBlob
+          }));
+        } else {
+          setFullRecording(audioBlob);
+        }
+        
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -95,8 +104,15 @@ export const ShadowingMode: React.FC = memo(() => {
     }
   };
 
-  const playRecording = (index: number) => {
-    const recording = recordings[index];
+  const playRecording = (index: number | 'full') => {
+    let recording: Blob | null = null;
+    
+    if (index === 'full') {
+      recording = fullRecording;
+    } else {
+      recording = sentenceRecordings[index] || null;
+    }
+    
     if (recording) {
       const audioUrl = URL.createObjectURL(recording);
       const audio = new Audio(audioUrl);
@@ -111,21 +127,35 @@ export const ShadowingMode: React.FC = memo(() => {
     }
   };
 
-  const deleteRecording = (index: number) => {
-    setRecordings(prev => {
-      const newRecordings = { ...prev };
-      delete newRecordings[index];
-      return newRecordings;
-    });
+  const deleteRecording = (index: number | 'full') => {
+    if (index === 'full') {
+      setFullRecording(null);
+    } else {
+      setSentenceRecordings(prev => {
+        const newRecordings = { ...prev };
+        delete newRecordings[index];
+        return newRecordings;
+      });
+    }
   };
 
-  const downloadRecording = (index: number) => {
-    const recording = recordings[index];
+  const downloadRecording = (index: number | 'full') => {
+    let recording: Blob | null = null;
+    let filename = '';
+    
+    if (index === 'full') {
+      recording = fullRecording;
+      filename = 'recording-full.wav';
+    } else {
+      recording = sentenceRecordings[index] || null;
+      filename = `recording-sentence-${index + 1}.wav`;
+    }
+    
     if (recording) {
       const url = URL.createObjectURL(recording);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `recording-sentence-${index + 1}.wav`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -134,7 +164,11 @@ export const ShadowingMode: React.FC = memo(() => {
   };
 
   const currentSubtitle = subtitles[currentSubtitleIndex];
-  const hasRecording = recordings[currentSentenceIndex];
+  
+  // Determine which recording to use based on mode
+  const hasRecording = shadowingMode === 'sentence' 
+    ? !!sentenceRecordings[currentSentenceIndex]
+    : !!fullRecording;
 
   const handleNextSentence = () => {
     if (currentSentenceIndex < subtitles.length - 1) {
@@ -190,7 +224,6 @@ export const ShadowingMode: React.FC = memo(() => {
         showPlayingIndicator={true}
       />
 
-
       {/* Recording Controls */}
       <div className="mb-6">
         <div className="flex items-center justify-center gap-4 mb-4">
@@ -213,6 +246,7 @@ export const ShadowingMode: React.FC = memo(() => {
             ) : hasRecording ? (
               <>
                 <RotateCcw size={20} />
+                Re-record
               </>
             ) : (
               <>
@@ -224,30 +258,32 @@ export const ShadowingMode: React.FC = memo(() => {
            
           {hasRecording && !isRecording && (
             <div className="flex gap-2">
+              {shadowingMode === 'sentence' && (
+                <button
+                  onClick={replayCurrentSentence}
+                  className="p-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200"
+                  title="Replay current sentence"
+                >
+                  <Volume2 size={20} />
+                </button>
+              )}
               <button
-                onClick={replayCurrentSentence}
-                className="p-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200"
-                title="Replay current sentence"
-              >
-                <Volume2 size={20} />
-              </button>
-              <button
-                onClick={() => playRecording(currentSentenceIndex)}
-                disabled={playingRecording === currentSentenceIndex}
+                onClick={() => playRecording(shadowingMode === 'sentence' ? currentSentenceIndex : 'full')}
+                disabled={playingRecording === (shadowingMode === 'sentence' ? currentSentenceIndex : 'full')}
                 className="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 disabled:opacity-50"
                 title="Play recording"
               >
                 <Play size={20} />
               </button>
               <button
-                onClick={() => downloadRecording(currentSentenceIndex)}
+                onClick={() => downloadRecording(shadowingMode === 'sentence' ? currentSentenceIndex : 'full')}
                 className="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
                 title="Download recording"
               >
                 <Download size={20} />
               </button>
               <button
-                onClick={() => deleteRecording(currentSentenceIndex)}
+                onClick={() => deleteRecording(shadowingMode === 'sentence' ? currentSentenceIndex : 'full')}
                 className="p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
                 title="Delete recording"
               >
