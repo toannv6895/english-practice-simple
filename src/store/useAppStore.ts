@@ -12,6 +12,7 @@ interface AppState {
   duration: number;
   playbackSpeed: number;
   volume: number;
+  isReplayEnabled: boolean;
   
   // Subtitle state
   subtitleFile: File | null;
@@ -37,6 +38,7 @@ interface AppState {
   setPracticeMode: (mode: PracticeMode) => void;
   setShadowingMode: (mode: ShadowingModeType) => void;
   setCurrentSentenceIndex: (index: number) => void;
+  setIsReplayEnabled: (enabled: boolean) => void;
   
   // Computed values
   getCurrentSubtitleIndex: () => number;
@@ -61,6 +63,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   duration: 0,
   playbackSpeed: 1,
   volume: 1,
+  isReplayEnabled: false,
   subtitleFile: null,
   subtitles: [],
   practiceMode: 'listening',
@@ -80,6 +83,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setPracticeMode: (mode) => set({ practiceMode: mode }),
   setShadowingMode: (mode) => set({ shadowingMode: mode }),
   setCurrentSentenceIndex: (index) => set({ currentSentenceIndex: index }),
+  setIsReplayEnabled: (enabled) => set({ isReplayEnabled: enabled }),
   
   // Computed values
   getCurrentSubtitleIndex: () => {
@@ -117,6 +121,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     duration: 0,
     playbackSpeed: 1,
     volume: 1,
+    isReplayEnabled: false,
   }),
   
   resetSubtitles: () => set({
@@ -132,6 +137,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     duration: 0,
     playbackSpeed: 1,
     volume: 1,
+    isReplayEnabled: false,
     subtitleFile: null,
     subtitles: [],
     practiceMode: 'listening',

@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, memo, useEffect } from 'react';
-import { Play, Pause, Volume2, SkipBack, SkipForward, Rewind, FastForward } from 'lucide-react';
+import { Play, Pause, Volume2, SkipBack, SkipForward, Rewind, FastForward, Repeat } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 
@@ -17,6 +17,7 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
     duration,
     playbackSpeed,
     volume,
+    isReplayEnabled,
     practiceMode,
     subtitles,
     setIsPlaying,
@@ -24,6 +25,7 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
     setDuration,
     setPlaybackSpeed,
     setVolume,
+    setIsReplayEnabled,
     stopAudio,
   } = useAppStore();
 
@@ -37,6 +39,14 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
       }
     }
   }, [isPlaying]);
+
+  // Handle replay - seek to 0 when isPlaying becomes true with replay enabled
+  useEffect(() => {
+    if (isPlaying && isReplayEnabled && audioRef.current && audioRef.current.currentTime > 0) {
+      // This handles the case when replay is triggered
+      audioRef.current.currentTime = 0;
+    }
+  }, [isPlaying, isReplayEnabled]);
 
   // Handle playback speed changes
   useEffect(() => {
@@ -58,6 +68,32 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
       audioRef.current.currentTime = currentTime;
     }
   }, [currentTime]);
+
+  // Handle audio ended event for replay
+  useEffect(() => {
+    const handleEnded = () => {
+      setCurrentTime(0);
+      setIsPlaying(false);
+      
+      // If replay is enabled, play again after a short delay
+      if (isReplayEnabled) {
+        setTimeout(() => {
+          setIsPlaying(true);
+        }, 100);
+      }
+    };
+
+    const audioElement = audioRef.current;
+    if (audioElement) {
+      audioElement.addEventListener('ended', handleEnded);
+    }
+
+    return () => {
+      if (audioElement) {
+        audioElement.removeEventListener('ended', handleEnded);
+      }
+    };
+  }, [isReplayEnabled, setCurrentTime, setIsPlaying]);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
@@ -123,6 +159,10 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
   }, [setVolume]);
+
+  const handleReplayToggle = useCallback(() => {
+    setIsReplayEnabled(!isReplayEnabled);
+  }, [isReplayEnabled, setIsReplayEnabled]);
 
   const formatTime = useCallback((time: number): string => {
     const minutes = Math.floor(time / 60);
@@ -252,6 +292,20 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
               ))}
             </div>
           </div>
+
+          {/* Replay Control */}
+          <button
+            onClick={handleReplayToggle}
+            className={cn(
+              "p-2 rounded-full transition-colors duration-200",
+              isReplayEnabled
+                ? "bg-primary-500 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            )}
+            title={isReplayEnabled ? "Replay enabled" : "Replay disabled"}
+          >
+            <Repeat size={16} />
+          </button>
         </div>
       </div>
     </div>
