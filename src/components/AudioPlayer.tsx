@@ -51,9 +51,18 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
   // Handle playback speed changes
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.playbackRate = playbackSpeed;
+      const currentSubtitleIndex = subtitles.findIndex(
+        subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
+      );
+      
+      let effectiveSpeed = playbackSpeed;
+      if (currentSubtitleIndex !== -1 && subtitles[currentSubtitleIndex].speed !== undefined) {
+        effectiveSpeed = subtitles[currentSubtitleIndex].speed!;
+      }
+      
+      audioRef.current.playbackRate = effectiveSpeed;
     }
-  }, [playbackSpeed]);
+  }, [playbackSpeed, currentTime, subtitles]);
 
   // Handle volume changes
   useEffect(() => {

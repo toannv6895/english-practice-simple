@@ -1,14 +1,78 @@
-import React, { memo, useRef, useEffect } from 'react';
+import React, { memo, useRef, useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
+import { Play, Settings } from 'lucide-react';
+
+interface SpeedControlProps {
+  subtitleIndex: number;
+  currentSpeed?: number;
+  onSpeedChange: (speed: number | undefined) => void;
+}
+
+const SpeedControl: React.FC<SpeedControlProps> = ({ subtitleIndex, currentSpeed, onSpeedChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+  
+  const handleSpeedChange = (speed: number | undefined) => {
+    onSpeedChange(speed);
+    setIsOpen(false);
+  };
+  
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "p-1 rounded text-xs transition-colors",
+          currentSpeed !== undefined
+            ? "bg-primary-100 text-primary-700 hover:bg-primary-200"
+            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+        )}
+        title={currentSpeed ? `Speed: ${currentSpeed}x` : "Set speed for this sentence"}
+      >
+        {currentSpeed ? `${currentSpeed}x` : <Settings size={12} />}
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 min-w-[120px]">
+          <div className="text-xs font-medium text-gray-700 mb-2">Sentence Speed</div>
+          <div className="space-y-1">
+            {speeds.map(speed => (
+              <button
+                key={speed}
+                onClick={() => handleSpeedChange(speed)}
+                className={cn(
+                  "w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100",
+                  currentSpeed === speed && "bg-primary-100 text-primary-700"
+                )}
+              >
+                {speed}x
+              </button>
+            ))}
+            {currentSpeed !== undefined && (
+              <button
+                onClick={() => handleSpeedChange(undefined)}
+                className="w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 text-gray-500"
+              >
+                Use default
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const ListeningMode: React.FC = memo(() => {
   const {
     subtitles,
     currentTime,
     currentSentenceIndex,
+    playbackSpeed,
     setCurrentTime,
-    setCurrentSentenceIndex
+    setCurrentSentenceIndex,
+    setSubtitleSpeed
   } = useAppStore();
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,11 +142,18 @@ export const ListeningMode: React.FC = memo(() => {
                 <span className="text-sm text-gray-500">
                   {formatTime(subtitle.startTime)} - {formatTime(subtitle.endTime)}
                 </span>
-                {isActive && (
-                  <span className="text-xs bg-primary-500 text-white px-2 py-1 rounded-full">
-                    Playing
-                  </span>
-                )}
+                <div className="flex items-center space-x-2">
+                  {isActive && (
+                    <span className="text-xs bg-primary-500 text-white px-2 py-1 rounded-full">
+                      Playing
+                    </span>
+                  )}
+                  <SpeedControl
+                    subtitleIndex={index}
+                    currentSpeed={subtitle.speed}
+                    onSpeedChange={(speed) => setSubtitleSpeed(index, speed)}
+                  />
+                </div>
               </div>
               <p className={cn(
                 "text-sm leading-relaxed",

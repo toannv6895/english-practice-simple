@@ -3,6 +3,7 @@ export interface SubtitleEntry {
   startTime: number;
   endTime: number;
   text: string;
+  speed?: number; // Optional speed override for this sentence
 }
 
 export interface AudioFile {

@@ -40,9 +40,13 @@ interface AppState {
   setCurrentSentenceIndex: (index: number) => void;
   setIsReplayEnabled: (enabled: boolean) => void;
   
+  // Per-sentence speed control
+  setSubtitleSpeed: (index: number, speed: number | undefined) => void;
+  
   // Computed values
   getCurrentSubtitleIndex: () => number;
   getCurrentSubtitle: () => SubtitleEntry | null;
+  getCurrentPlaybackSpeed: () => number;
   
   // Audio control functions
   playCurrentSubtitle: () => void;
@@ -85,6 +89,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCurrentSentenceIndex: (index) => set({ currentSentenceIndex: index }),
   setIsReplayEnabled: (enabled) => set({ isReplayEnabled: enabled }),
   
+  // Per-sentence speed control
+  setSubtitleSpeed: (index, speed) => set((state) => ({
+    subtitles: state.subtitles.map((subtitle, i) =>
+      i === index ? { ...subtitle, speed } : subtitle
+    )
+  })),
+  
   // Computed values
   getCurrentSubtitleIndex: () => {
     const { subtitles, currentTime } = get();
@@ -97,6 +108,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { subtitles, getCurrentSubtitleIndex } = get();
     const index = getCurrentSubtitleIndex();
     return index !== -1 ? subtitles[index] : null;
+  },
+  
+  getCurrentPlaybackSpeed: () => {
+    const { subtitles, currentTime, playbackSpeed } = get();
+    const currentSubtitleIndex = subtitles.findIndex(
+      subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
+    );
+    
+    if (currentSubtitleIndex !== -1 && subtitles[currentSubtitleIndex].speed !== undefined) {
+      return subtitles[currentSubtitleIndex].speed!;
+    }
+    
+    return playbackSpeed;
   },
   
   // Audio control functions
