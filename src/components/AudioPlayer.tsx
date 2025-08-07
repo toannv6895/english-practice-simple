@@ -204,48 +204,6 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
 
       {/* Custom Audio Controls */}
       <div className="flex flex-col space-y-4">
-        {/* Main Controls */}
-        <div className="flex items-center justify-center space-x-2">
-          <button
-            onClick={handleSkipBackward}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
-            title="Skip backward 10s"
-          >
-            <SkipBack size={18} className="text-gray-700" />
-          </button>
-          
-          <button
-            onClick={handleBack5s}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
-            title="Back 5s"
-          >
-            <Rewind size={18} className="text-gray-700" />
-          </button>
-          
-          <button
-            onClick={handlePlayPause}
-            className="p-3 rounded-full bg-primary-500 hover:bg-primary-600 text-white transition-colors duration-200 shadow-md"
-          >
-            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-          </button>
-          
-          <button
-            onClick={handleForward5s}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
-            title="Forward 5s"
-          >
-            <FastForward size={18} className="text-gray-700" />
-          </button>
-          
-          <button
-            onClick={handleSkipForward}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
-            title="Skip forward 10s"
-          >
-            <SkipForward size={18} className="text-gray-700" />
-          </button>
-        </div>
-
         {/* Progress Bar */}
         <div className="flex items-center space-x-3">
           <span className="text-sm text-gray-500 font-medium min-w-[40px]">
@@ -271,26 +229,69 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
           </span>
         </div>
 
-        {/* Volume and Speed Controls */}
+        {/* Combined Controls - All buttons on one line */}
         <div className="flex items-center justify-between space-x-4">
-          {/* Volume Control */}
+          {/* Left side: Play controls */}
           <div className="flex items-center space-x-2">
-            <Volume2 size={16} className="text-gray-500" />
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.1}
-              value={volume}
-              className="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              onChange={handleVolumeChange}
-              style={{
-                background: `linear-gradient(to right, #14b8a6 0%, #14b8a6 ${volume * 100}%, #e5e7eb ${volume * 100}%, #e5e7eb 100%)`
-              }}
-            />
+            <button
+              onClick={handleSkipBackward}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+              title="Skip backward 10s"
+            >
+              <SkipBack size={18} className="text-gray-700" />
+            </button>
+            
+            <button
+              onClick={handleBack5s}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+              title="Back 5s"
+            >
+              <Rewind size={18} className="text-gray-700" />
+            </button>
+            
+            <button
+              onClick={handlePlayPause}
+              className="p-3 rounded-full bg-primary-500 hover:bg-primary-600 text-white transition-colors duration-200 shadow-md"
+            >
+              {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+            </button>
+            
+            <button
+              onClick={handleForward5s}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+              title="Forward 5s"
+            >
+              <FastForward size={18} className="text-gray-700" />
+            </button>
+            
+            <button
+              onClick={handleSkipForward}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+              title="Skip forward 10s"
+            >
+              <SkipForward size={18} className="text-gray-700" />
+            </button>
           </div>
 
+          {/* Right side: Volume, Speed and Replay */}
           <div className="flex items-center space-x-3">
+            {/* Volume Control */}
+            <div className="flex items-center space-x-2">
+              <Volume2 size={16} className="text-gray-500" />
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.1}
+                value={volume}
+                className="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                onChange={handleVolumeChange}
+                style={{
+                  background: `linear-gradient(to right, #14b8a6 0%, #14b8a6 ${volume * 100}%, #e5e7eb ${volume * 100}%, #e5e7eb 100%)`
+                }}
+              />
+            </div>
+
             {/* Speed Control */}
             <div className="flex bg-teal-50 border-2 border-teal-500 rounded-full p-0.5 space-x-0.5">
               {[0.25, 0.5, 0.75, 1].map((speed) => (
