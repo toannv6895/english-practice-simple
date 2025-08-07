@@ -290,40 +290,39 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
             />
           </div>
 
-          {/* Speed Control */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500 font-medium">Speed:</span>
-            <div className="flex space-x-1">
+          <div className="flex items-center space-x-3">
+            {/* Speed Control */}
+            <div className="flex bg-teal-50 border-2 border-teal-500 rounded-full p-0.5 space-x-0.5">
               {[0.25, 0.5, 0.75, 1].map((speed) => (
                 <button
                   key={speed}
                   onClick={() => handleSpeedChange(speed)}
                   className={cn(
-                    "px-2 py-1 text-xs rounded transition-colors duration-200",
+                    "px-3 py-1.5 text-xs rounded-full transition-all duration-200 font-medium",
                     playbackSpeed === speed
-                      ? "bg-primary-500 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-teal-500 text-white shadow-sm"
+                      : "text-teal-700 hover:text-teal-800 hover:bg-teal-100"
                   )}
                 >
                   {speed}x
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Replay Control */}
-          <button
-            onClick={handleReplayToggle}
-            className={cn(
-              "p-2 rounded-full transition-colors duration-200",
-              isReplayEnabled
-                ? "bg-primary-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            )}
-            title={isReplayEnabled ? "Replay enabled" : "Replay disabled"}
-          >
-            <Repeat size={16} />
-          </button>
+            {/* Replay Control */}
+            <button
+              onClick={handleReplayToggle}
+              className={cn(
+                "p-2 rounded-full transition-colors duration-200",
+                isReplayEnabled
+                  ? "bg-primary-500 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              )}
+              title={isReplayEnabled ? "Replay enabled" : "Replay disabled"}
+            >
+              <Repeat size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
