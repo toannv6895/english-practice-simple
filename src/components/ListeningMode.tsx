@@ -14,7 +14,7 @@ const SpeedControl: React.FC<SpeedControlProps & {
   onToggle: () => void;
   onClose: () => void;
 }> = ({ subtitleIndex, currentSpeed, onSpeedChange, isOpen, onToggle, onClose }) => {
-  const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+  const speeds = [0.25, 0.5, 0.75, 1];
   const popupRef = useRef<HTMLDivElement>(null);
   
   const handleSpeedChange = (speed: number | undefined) => {
@@ -41,7 +41,10 @@ const SpeedControl: React.FC<SpeedControlProps & {
   return (
     <div className="relative" ref={popupRef}>
       <button
-        onClick={onToggle}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
         className={cn(
           "p-1 rounded text-xs transition-colors",
           currentSpeed !== undefined
@@ -54,13 +57,16 @@ const SpeedControl: React.FC<SpeedControlProps & {
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 min-w-[120px]">
+        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 min-w-[120px]" onClick={(e) => e.stopPropagation()}>
           <div className="text-xs font-medium text-gray-700 mb-2">Sentence Speed</div>
           <div className="space-y-1">
             {speeds.map(speed => (
               <button
                 key={speed}
-                onClick={() => handleSpeedChange(speed)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSpeedChange(speed);
+                }}
                 className={cn(
                   "w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100",
                   currentSpeed === speed && "bg-primary-100 text-primary-700"
@@ -71,7 +77,10 @@ const SpeedControl: React.FC<SpeedControlProps & {
             ))}
             {currentSpeed !== undefined && (
               <button
-                onClick={() => handleSpeedChange(undefined)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSpeedChange(undefined);
+                }}
                 className="w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 text-gray-500"
               >
                 Use default
@@ -123,7 +132,10 @@ const VolumeControl: React.FC<{
   return (
     <div className="relative" ref={popupRef}>
       <button
-        onClick={onToggle}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
         className={cn(
           "p-1 rounded text-xs transition-colors flex items-center gap-1",
           currentVolume !== undefined
@@ -143,7 +155,7 @@ const VolumeControl: React.FC<{
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10 min-w-[200px]">
+        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10 min-w-[200px]" onClick={(e) => e.stopPropagation()}>
           <div className="text-xs font-medium text-gray-700 mb-2">Sentence Volume</div>
           
           <div className="space-y-3">
@@ -156,6 +168,7 @@ const VolumeControl: React.FC<{
                 step="0.1"
                 value={currentVolume ?? 1}
                 onChange={handleSliderChange}
+                onClick={(e) => e.stopPropagation()}
                 className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
               <Volume2 size={14} className="text-gray-500" />
@@ -167,7 +180,10 @@ const VolumeControl: React.FC<{
             
             {currentVolume !== undefined && (
               <button
-                onClick={() => handleVolumeChange(undefined)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleVolumeChange(undefined);
+                }}
                 className="w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 text-gray-500"
               >
                 Use default

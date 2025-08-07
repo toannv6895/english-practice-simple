@@ -50,7 +50,10 @@ export const VolumeControl: React.FC<VolumeControlProps> = memo(({
   return (
     <div className="relative" ref={popupRef}>
       <button
-        onClick={onToggle}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
         className={cn(
           "p-1 rounded text-xs transition-colors flex items-center gap-1",
           currentVolume !== undefined
@@ -70,7 +73,7 @@ export const VolumeControl: React.FC<VolumeControlProps> = memo(({
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10 min-w-[200px]">
+        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10 min-w-[200px]" onClick={(e) => e.stopPropagation()}>
           <div className="text-xs font-medium text-gray-700 mb-2">Sentence Volume</div>
           
           <div className="space-y-3">
@@ -83,6 +86,7 @@ export const VolumeControl: React.FC<VolumeControlProps> = memo(({
                 step="0.1"
                 value={currentVolume ?? 1}
                 onChange={handleSliderChange}
+                onClick={(e) => e.stopPropagation()}
                 className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
               <Volume2 size={14} className="text-gray-500" />
@@ -94,7 +98,10 @@ export const VolumeControl: React.FC<VolumeControlProps> = memo(({
             
             {currentVolume !== undefined && (
               <button
-                onClick={() => handleVolumeChange(undefined)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleVolumeChange(undefined);
+                }}
                 className="w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 text-gray-500"
               >
                 Use default
