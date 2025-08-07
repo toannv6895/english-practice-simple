@@ -67,9 +67,18 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
   // Handle volume changes
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume;
+      const currentSubtitleIndex = subtitles.findIndex(
+        subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
+      );
+      
+      let effectiveVolume = volume;
+      if (currentSubtitleIndex !== -1 && subtitles[currentSubtitleIndex].volume !== undefined) {
+        effectiveVolume = subtitles[currentSubtitleIndex].volume!;
+      }
+      
+      audioRef.current.volume = effectiveVolume;
     }
-  }, [volume]);
+  }, [volume, currentTime, subtitles]);
 
   // Handle seeking
   useEffect(() => {

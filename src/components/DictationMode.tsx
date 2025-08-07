@@ -4,21 +4,42 @@ import { cn } from '../utils/cn';
 import { compareTexts } from '../utils/textComparison';
 import { CurrentSentence } from './CurrentSentence';
 import { useGlobalKeyboardShortcuts } from '../hooks/useGlobalKeyboardShortcuts';
+import { VolumeControl } from './VolumeControl';
 
 export const DictationMode: React.FC = memo(() => {
-  const { 
-    subtitles, 
-    currentTime, 
-    isPlaying, 
+  const {
+    subtitles,
+    currentTime,
+    isPlaying,
     currentSentenceIndex,
     setCurrentTime,
     setIsPlaying,
     setCurrentSentenceIndex,
-    practiceMode
+    practiceMode,
+    setSubtitleVolume
   } = useAppStore();
   
   const [userInput, setUserInput] = useState('');
   const [showAnswer, setShowAnswer] = useState(false);
+  
+  // State for managing popups - only one can be open at a time
+  const [openPopup, setOpenPopup] = useState<{
+    type: 'volume' | null;
+    index: number | null;
+  }>({ type: null, index: null });
+  
+  const handlePopupToggle = (type: 'volume', index: number) => {
+    setOpenPopup(prev => {
+      if (prev.type === type && prev.index === index) {
+        return { type: null, index: null }; // Close if clicking the same button
+      }
+      return { type, index }; // Open new popup and close others
+    });
+  };
+  
+  const handleClosePopup = () => {
+    setOpenPopup({ type: null, index: null });
+  };
 
   // Use the tracked sentence index instead of calculating from time
   const currentSubtitleIndex = currentSentenceIndex;
@@ -122,11 +143,23 @@ export const DictationMode: React.FC = memo(() => {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       {/* Current Sentence Display using shared component */}
-      <CurrentSentence
-        showBlurred={true}
-        matchedWords={matchedWords}
-        showAnswer={showAnswer}
-      />
+      <div className="mb-4">
+        <CurrentSentence
+          showBlurred={true}
+          matchedWords={matchedWords}
+          showAnswer={showAnswer}
+        />
+        <div className="mt-2 flex justify-end">
+          <VolumeControl
+            subtitleIndex={currentSubtitleIndex}
+            currentVolume={currentSubtitle?.volume}
+            onVolumeChange={(volume) => setSubtitleVolume(currentSubtitleIndex, volume)}
+            isOpen={openPopup.type === 'volume' && openPopup.index === currentSubtitleIndex}
+            onToggle={() => handlePopupToggle('volume', currentSubtitleIndex)}
+            onClose={handleClosePopup}
+          />
+        </div>
+      </div>
 
       {/* User Input - Removed label */}
       <div className="mb-6">

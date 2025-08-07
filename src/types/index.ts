@@ -4,6 +4,7 @@ export interface SubtitleEntry {
   endTime: number;
   text: string;
   speed?: number; // Optional speed override for this sentence
+  volume?: number; // Optional volume override for this sentence (0-1)
 }
 
 export interface AudioFile {

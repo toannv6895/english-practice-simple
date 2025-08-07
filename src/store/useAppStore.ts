@@ -40,8 +40,9 @@ interface AppState {
   setCurrentSentenceIndex: (index: number) => void;
   setIsReplayEnabled: (enabled: boolean) => void;
   
-  // Per-sentence speed control
+  // Per-sentence speed and volume control
   setSubtitleSpeed: (index: number, speed: number | undefined) => void;
+  setSubtitleVolume: (index: number, volume: number | undefined) => void;
   
   // Computed values
   getCurrentSubtitleIndex: () => number;
@@ -89,10 +90,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCurrentSentenceIndex: (index) => set({ currentSentenceIndex: index }),
   setIsReplayEnabled: (enabled) => set({ isReplayEnabled: enabled }),
   
-  // Per-sentence speed control
+  // Per-sentence speed and volume control
   setSubtitleSpeed: (index, speed) => set((state) => ({
     subtitles: state.subtitles.map((subtitle, i) =>
       i === index ? { ...subtitle, speed } : subtitle
+    )
+  })),
+  
+  setSubtitleVolume: (index, volume) => set((state) => ({
+    subtitles: state.subtitles.map((subtitle, i) =>
+      i === index ? { ...subtitle, volume } : subtitle
     )
   })),
   
@@ -121,6 +128,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     
     return playbackSpeed;
+  },
+  
+  getCurrentVolume: () => {
+    const { subtitles, currentTime, volume } = get();
+    const currentSubtitleIndex = subtitles.findIndex(
+      subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
+    );
+    
+    if (currentSubtitleIndex !== -1 && subtitles[currentSubtitleIndex].volume !== undefined) {
+      return subtitles[currentSubtitleIndex].volume!;
+    }
+    
+    return volume;
   },
   
   // Audio control functions

@@ -4,6 +4,7 @@ import { Mic, Play, Square, Download, RotateCcw, Volume2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { CurrentSentence } from './CurrentSentence';
 import { useGlobalKeyboardShortcuts } from '../hooks/useGlobalKeyboardShortcuts';
+import { VolumeControl } from './VolumeControl';
 
 export const ShadowingMode: React.FC = memo(() => {
   const {
@@ -17,7 +18,8 @@ export const ShadowingMode: React.FC = memo(() => {
     setIsPlaying,
     setShadowingMode,
     stopAudio,
-    practiceMode
+    practiceMode,
+    setSubtitleVolume
   } = useAppStore();
   
   // Separate storage for sentence and full mode recordings
@@ -27,6 +29,25 @@ export const ShadowingMode: React.FC = memo(() => {
   const [playingRecording, setPlayingRecording] = useState<number | 'full' | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  
+  // State for managing popups - only one can be open at a time
+  const [openPopup, setOpenPopup] = useState<{
+    type: 'volume' | null;
+    index: number | null;
+  }>({ type: null, index: null });
+  
+  const handlePopupToggle = (type: 'volume', index: number) => {
+    setOpenPopup(prev => {
+      if (prev.type === type && prev.index === index) {
+        return { type: null, index: null }; // Close if clicking the same button
+      }
+      return { type, index }; // Open new popup and close others
+    });
+  };
+  
+  const handleClosePopup = () => {
+    setOpenPopup({ type: null, index: null });
+  };
 
   // Initialize sentence index when component loads or when switching to shadowing mode
   useEffect(() => {
@@ -220,9 +241,21 @@ export const ShadowingMode: React.FC = memo(() => {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       {/* Current Sentence Display using shared component */}
-      <CurrentSentence
-        showPlayingIndicator={true}
-      />
+      <div className="mb-4">
+        <CurrentSentence
+          showPlayingIndicator={true}
+        />
+        <div className="mt-2 flex justify-end">
+          <VolumeControl
+            subtitleIndex={currentSentenceIndex}
+            currentVolume={currentSubtitle?.volume}
+            onVolumeChange={(volume) => setSubtitleVolume(currentSentenceIndex, volume)}
+            isOpen={openPopup.type === 'volume' && openPopup.index === currentSentenceIndex}
+            onToggle={() => handlePopupToggle('volume', currentSentenceIndex)}
+            onClose={handleClosePopup}
+          />
+        </div>
+      </div>
 
       {/* Recording Controls */}
       <div className="mb-6">
