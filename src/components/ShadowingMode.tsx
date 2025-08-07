@@ -51,6 +51,11 @@ export const ShadowingMode: React.FC = memo(() => {
 
   // Initialize sentence index when component loads or when switching to shadowing mode
   useEffect(() => {
+    // Don't auto-update index if popup is open
+    if (openPopup.type !== null) {
+      return;
+    }
+
     if (subtitles.length > 0 && practiceMode === 'shadowing') {
       // Find the current subtitle based on time, or keep current index
       const timeBasedIndex = subtitles.findIndex(
@@ -61,7 +66,7 @@ export const ShadowingMode: React.FC = memo(() => {
         setCurrentSentenceIndex(timeBasedIndex);
       }
     }
-  }, [subtitles, practiceMode, currentTime, currentSentenceIndex, setCurrentSentenceIndex]);
+  }, [subtitles, practiceMode, currentTime, currentSentenceIndex, setCurrentSentenceIndex, openPopup.type]);
 
   // Auto-stop functionality for sentence mode (similar to dictation)
   useEffect(() => {

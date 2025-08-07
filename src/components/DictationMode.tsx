@@ -46,6 +46,11 @@ export const DictationMode: React.FC = memo(() => {
 
   // Initialize dictation index when component loads
   useEffect(() => {
+    // Don't auto-update index if popup is open
+    if (openPopup.type !== null) {
+      return;
+    }
+
     if (subtitles.length > 0 && practiceMode === 'dictation') {
       // Find the current subtitle based on time, or default to 0
       const timeBasedIndex = subtitles.findIndex(
@@ -54,7 +59,7 @@ export const DictationMode: React.FC = memo(() => {
       const initialIndex = timeBasedIndex !== -1 ? timeBasedIndex : 0;
       setCurrentSentenceIndex(initialIndex);
     }
-  }, [subtitles, practiceMode, setCurrentSentenceIndex]);
+  }, [subtitles, practiceMode, currentTime, setCurrentSentenceIndex, openPopup.type]);
 
   // Auto-stop functionality when sentence ends
   useEffect(() => {

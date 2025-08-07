@@ -224,6 +224,11 @@ export const ListeningMode: React.FC = memo(() => {
 
   // Auto scroll to current sentence
   useEffect(() => {
+    // Don't auto-scroll if any popup is open
+    if (openPopup.type !== null) {
+      return;
+    }
+
     if (currentIndex !== -1 && sentenceRefs.current[currentIndex]) {
       const element = sentenceRefs.current[currentIndex];
       const container = containerRef.current;
@@ -246,7 +251,7 @@ export const ListeningMode: React.FC = memo(() => {
         }
       }
     }
-  }, [currentIndex]);
+  }, [currentIndex, openPopup.type]);
 
   const handleSeekToTime = (time: number, index: number) => {
     setCurrentTime(time);
