@@ -57,7 +57,7 @@ export const VolumeControl: React.FC<VolumeControlProps> = memo(({
         className={cn(
           "p-1 rounded text-xs transition-colors flex items-center gap-1",
           currentVolume !== undefined
-            ? "bg-primary-100 text-primary-700 hover:bg-primary-200"
+            ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
         )}
         title={currentVolume !== undefined ? `Volume: ${Math.round(currentVolume * 100)}%` : "Set volume for this sentence"}

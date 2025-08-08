@@ -1,7 +1,7 @@
 import React, { memo, useRef, useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
-import { Play, Settings, Volume2, VolumeX } from 'lucide-react';
+import { Settings, Volume2, VolumeX } from 'lucide-react';
 
 interface SpeedControlProps {
   subtitleIndex: number;
@@ -48,7 +48,7 @@ const SpeedControl: React.FC<SpeedControlProps & {
         className={cn(
           "p-1 rounded text-xs transition-colors",
           currentSpeed !== undefined
-            ? "bg-primary-100 text-primary-700 hover:bg-primary-200"
+            ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
         )}
         title={currentSpeed ? `Speed: ${currentSpeed}x` : "Set speed for this sentence"}
@@ -69,7 +69,7 @@ const SpeedControl: React.FC<SpeedControlProps & {
                 }}
                 className={cn(
                   "w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100",
-                  currentSpeed === speed && "bg-primary-100 text-primary-700"
+                  currentSpeed === speed && "bg-teal-100 text-teal-700"
                 )}
               >
                 {speed}x
@@ -139,7 +139,7 @@ const VolumeControl: React.FC<{
         className={cn(
           "p-1 rounded text-xs transition-colors flex items-center gap-1",
           currentVolume !== undefined
-            ? "bg-primary-100 text-primary-700 hover:bg-primary-200"
+            ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
         )}
         title={currentVolume !== undefined ? `Volume: ${Math.round(currentVolume * 100)}%` : "Set volume for this sentence"}
@@ -200,8 +200,6 @@ export const ListeningMode: React.FC = memo(() => {
   const {
     subtitles,
     currentTime,
-    currentSentenceIndex,
-    playbackSpeed,
     setCurrentTime,
     setCurrentSentenceIndex,
     setSubtitleSpeed,
@@ -289,7 +287,7 @@ export const ListeningMode: React.FC = memo(() => {
               }}
               className={cn(
                 "p-3 mb-2 rounded-lg cursor-pointer transition-all duration-200",
-                isActive && "bg-primary-100 border-l-4 border-primary-500",
+                isActive && "bg-teal-100 border-l-4 border-teal-500",
                 isPast && !isActive && "bg-gray-50 text-gray-600",
                 !isActive && !isPast && "hover:bg-gray-50"
               )}
@@ -301,7 +299,7 @@ export const ListeningMode: React.FC = memo(() => {
                 </span>
                 <div className="flex items-center space-x-2">
                   {isActive && (
-                    <span className="text-xs bg-primary-500 text-white px-2 py-1 rounded-full">
+                    <span className="text-xs bg-teal-500 text-white px-2 py-1 rounded-full">
                       Playing
                     </span>
                   )}

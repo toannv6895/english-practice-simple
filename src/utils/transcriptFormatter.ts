@@ -1,21 +1,40 @@
 import { SubtitleEntry } from '../types';
 
-export interface RegenerateOptions {
-  wordThreshold?: number;
-  joinShortSentences?: boolean;
-  splitLongSentences?: boolean;
-}
+export const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+};
 
-export function regenerateTranscript(
-  subtitles: SubtitleEntry[],
-  options: RegenerateOptions = {}
-): SubtitleEntry[] {
-  const {
-    wordThreshold = 20,
-    joinShortSentences = true,
-    splitLongSentences = true
-  } = options;
+export const formatTime = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+};
 
+export const parseTimeToSeconds = (timeStr: string): number => {
+  const parts = timeStr.split(':').map(Number);
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  } else if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+  return 0;
+};
+
+export const formatSubtitleText = (text: string): string => {
+  return text
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+};
+
+export function mergeSubtitlesBySentences(subtitles: SubtitleEntry[]): SubtitleEntry[] {
   if (!subtitles || subtitles.length === 0) {
     return [];
   }
@@ -74,6 +93,9 @@ export function regenerateTranscript(
   return processedSubtitles;
 }
 
+export function regenerateTranscript(subtitles: SubtitleEntry[]): SubtitleEntry[] {
+  return mergeSubtitlesBySentences(subtitles);
+}
 
 export function getTranscriptPreview(subtitles: SubtitleEntry[]): string {
   if (!subtitles || subtitles.length === 0) {

@@ -19,8 +19,7 @@ export const CurrentSentence: React.FC<CurrentSentenceProps> = ({
 }) => {
   const { 
     subtitles, 
-    currentSentenceIndex,
-    isPlaying
+    currentSentenceIndex
   } = useAppStore();
 
   const currentSubtitle = subtitles[currentSentenceIndex];

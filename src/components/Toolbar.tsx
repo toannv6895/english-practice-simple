@@ -31,7 +31,7 @@ export const Toolbar: React.FC<ToolbarProps> = memo(({ onImportTranscript, onReg
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex-1",
                 practiceMode === mode
-                  ? "bg-primary-500 text-white shadow-sm"
+                  ? "bg-teal-600 text-white shadow-sm"
                   : hasSubtitles
                     ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                     : "text-gray-400 cursor-not-allowed"
@@ -48,7 +48,7 @@ export const Toolbar: React.FC<ToolbarProps> = memo(({ onImportTranscript, onReg
           {onRegenerateTranscript && hasSubtitles && (
             <button
               onClick={onRegenerateTranscript}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md text-sm font-medium transition-all duration-200 shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md text-sm font-medium transition-all duration-200 shadow-sm"
               title="Regenerate transcript with optimized formatting"
             >
               <RefreshCw size={16} />
@@ -57,7 +57,7 @@ export const Toolbar: React.FC<ToolbarProps> = memo(({ onImportTranscript, onReg
           )}
           <button
             onClick={onImportTranscript}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md text-sm font-medium transition-all duration-200 shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-sm font-medium transition-all duration-200 shadow-sm"
           >
             <Upload size={16} />
             Import Transcript

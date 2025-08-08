@@ -8,9 +8,13 @@ export interface SubtitleEntry {
 }
 
 export interface AudioFile {
+  id: string;
   name: string;
   url: string;
   duration: number;
+  playlistId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type PracticeMode = 'listening' | 'dictation' | 'shadowing';
@@ -27,4 +31,26 @@ export interface ShadowingEntry {
   originalText: string;
   audioBlob?: Blob;
   audioUrl?: string;
+}
+
+export type PlaylistVisibility = 'public' | 'protected' | 'private';
+
+export interface Playlist {
+  id: string;
+  name: string;
+  description: string;
+  visibility: PlaylistVisibility;
+  ownerId: string;
+  coverImage?: string;
+  audioCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+  invitedUsers?: string[]; // For protected playlists
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
 } 
