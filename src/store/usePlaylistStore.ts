@@ -1,261 +1,255 @@
-import { create } from 'zustand';
-import { Playlist, AudioFile } from '../types';
+import { create } from 'zustand'
+import { supabase } from '../lib/supabase'
+import { Playlist, AudioFile } from '../types'
 
 interface PlaylistState {
-  // Playlists
-  playlists: Playlist[];
-  currentPlaylist: Playlist | null;
-  publicPlaylists: Playlist[];
+  playlists: Playlist[]
+  currentPlaylist: Playlist | null
+  audios: AudioFile[]
+  isLoading: boolean
+  error: string | null
+  publicPlaylists: Playlist[]
   
-  // Audios
-  audios: AudioFile[];
-  currentAudio: AudioFile | null;
+  // Existing methods...
   
-  // UI State
-  isLoading: boolean;
-  error: string | null;
+  // New Supabase methods
+  fetchUserPlaylists: () => Promise<void>
+  createPlaylistSupabase: (playlist: Omit<Playlist, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
+  updatePlaylistSupabase: (id: string, updates: Partial<Playlist>) => Promise<void>
+  deletePlaylistSupabase: (id: string) => Promise<void>
+  fetchAudiosByPlaylist: (playlistId: string) => Promise<void>
+  clearError: () => void
   
-  // Actions
-  setPlaylists: (playlists: Playlist[]) => void;
-  setPublicPlaylists: (playlists: Playlist[]) => void;
-  setCurrentPlaylist: (playlist: Playlist | null) => void;
-  setAudios: (audios: AudioFile[]) => void;
-  setCurrentAudio: (audio: AudioFile | null) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  
-  // Playlist actions
-  createPlaylist: (playlist: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt' | 'audioCount'>) => void;
-  updatePlaylist: (id: string, updates: Partial<Playlist>) => void;
-  deletePlaylist: (id: string) => void;
-  
-  // Audio actions
-  addAudio: (audio: Omit<AudioFile, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateAudio: (id: string, updates: Partial<AudioFile>) => void;
-  deleteAudio: (id: string) => void;
-  
-  // Computed
-  getPlaylistById: (id: string) => Playlist | null;
-  getAudiosByPlaylistId: (playlistId: string) => AudioFile[];
-  getPublicPlaylists: () => Playlist[];
-  getUserPlaylists: (userId: string) => Playlist[];
+  // Additional methods needed by components
+  getUserPlaylists: () => Playlist[]
+  createPlaylist: (playlist: Omit<Playlist, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
+  updatePlaylist: (id: string, updates: Partial<Playlist>) => Promise<void>
+  deletePlaylist: (id: string) => Promise<void>
+  getAudiosByPlaylistId: (playlistId: string) => AudioFile[]
+  getPlaylistById: (id: string) => Playlist | null
+  getPublicPlaylists: () => Promise<void>
+  setPublicPlaylists: (playlists: Playlist[]) => void
 }
 
-// Sample data
-const samplePlaylists: Playlist[] = [
-  {
-    id: '1',
-    name: 'English Conversations',
-    description: 'Practice everyday English conversations with native speakers',
-    visibility: 'public',
-    ownerId: 'current-user-id',
-    coverImage: undefined,
-    audioCount: 3,
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-20'),
-  },
-  {
-    id: '2',
-    name: 'Business English',
-    description: 'Professional English for workplace communication',
-    visibility: 'protected',
-    ownerId: 'current-user-id',
-    coverImage: undefined,
-    audioCount: 2,
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-18'),
-  },
-  {
-    id: '3',
-    name: 'Academic Listening',
-    description: 'University lectures and academic discussions',
-    visibility: 'private',
-    ownerId: 'current-user-id',
-    coverImage: undefined,
-    audioCount: 1,
-    createdAt: new Date('2024-01-05'),
-    updatedAt: new Date('2024-01-12'),
-  },
-];
-
-const sampleAudios: AudioFile[] = [
-  {
-    id: '1',
-    name: 'Daily Conversation - Greetings',
-    url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Placeholder URL
-    duration: 120,
-    playlistId: '1',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-  },
-  {
-    id: '2',
-    name: 'Business Meeting - Introductions',
-    url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Placeholder URL
-    duration: 180,
-    playlistId: '1',
-    createdAt: new Date('2024-01-16'),
-    updatedAt: new Date('2024-01-16'),
-  },
-  {
-    id: '3',
-    name: 'Phone Call Practice',
-    url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Placeholder URL
-    duration: 150,
-    playlistId: '1',
-    createdAt: new Date('2024-01-17'),
-    updatedAt: new Date('2024-01-17'),
-  },
-  {
-    id: '4',
-    name: 'Job Interview Questions',
-    url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Placeholder URL
-    duration: 200,
-    playlistId: '2',
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-10'),
-  },
-  {
-    id: '5',
-    name: 'Presentation Skills',
-    url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Placeholder URL
-    duration: 160,
-    playlistId: '2',
-    createdAt: new Date('2024-01-11'),
-    updatedAt: new Date('2024-01-11'),
-  },
-  {
-    id: '6',
-    name: 'University Lecture - Economics',
-    url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Placeholder URL
-    duration: 300,
-    playlistId: '3',
-    createdAt: new Date('2024-01-05'),
-    updatedAt: new Date('2024-01-05'),
-  },
-];
-
 export const usePlaylistStore = create<PlaylistState>((set, get) => ({
-  // Initial state
-  playlists: samplePlaylists,
+  playlists: [],
   currentPlaylist: null,
-  publicPlaylists: samplePlaylists.filter(p => p.visibility === 'public'),
-  audios: sampleAudios,
-  currentAudio: null,
+  audios: [],
   isLoading: false,
   error: null,
+  publicPlaylists: [],
   
-  // Actions
-  setPlaylists: (playlists) => set({ playlists }),
-  setPublicPlaylists: (playlists) => set({ publicPlaylists: playlists }),
-  setCurrentPlaylist: (playlist) => set({ currentPlaylist: playlist }),
-  setAudios: (audios) => set({ audios }),
-  setCurrentAudio: (audio) => set({ currentAudio: audio }),
-  setLoading: (loading) => set({ isLoading: loading }),
-  setError: (error) => set({ error }),
-  
-  // Playlist actions
-  createPlaylist: (playlistData) => {
-    const newPlaylist: Playlist = {
-      ...playlistData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      audioCount: 0,
-    };
-    
-    set((state) => ({
-      playlists: [...state.playlists, newPlaylist],
-      currentPlaylist: newPlaylist,
-    }));
+  fetchUserPlaylists: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+      
+      const { data, error } = await supabase
+        .from('playlists')
+        .select(`
+          *,
+          audios(count)
+        `)
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      
+      set({ 
+        playlists: data?.map((playlist: any) => ({
+          ...playlist,
+          audio_count: playlist.audios?.[0]?.count || 0
+        })) || [] 
+      })
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to fetch playlists' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
   
-  updatePlaylist: (id, updates) => {
-    set((state) => ({
-      playlists: state.playlists.map((playlist) =>
-        playlist.id === id
-          ? { ...playlist, ...updates, updatedAt: new Date() }
-          : playlist
-      ),
-      currentPlaylist: state.currentPlaylist?.id === id
-        ? { ...state.currentPlaylist, ...updates, updatedAt: new Date() }
-        : state.currentPlaylist,
-    }));
+  createPlaylistSupabase: async (playlistData) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+      
+      const { data, error } = await supabase
+        .from('playlists')
+        .insert([{
+          ...playlistData,
+          owner_id: user.id
+        }])
+        .select()
+        .single()
+      
+      if (error) throw error
+      
+      set(state => ({
+        playlists: [data, ...state.playlists]
+      }))
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to create playlist' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
   
-  deletePlaylist: (id) => {
-    set((state) => ({
-      playlists: state.playlists.filter((playlist) => playlist.id !== id),
-      currentPlaylist: state.currentPlaylist?.id === id ? null : state.currentPlaylist,
-      audios: state.audios.filter((audio) => audio.playlistId !== id),
-    }));
+  updatePlaylistSupabase: async (id, updates) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { data, error } = await supabase
+        .from('playlists')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      
+      set(state => ({
+        playlists: state.playlists.map(p => 
+          p.id === id ? { ...p, ...data } : p
+        )
+      }))
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to update playlist' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
   
-  // Audio actions
-  addAudio: (audioData) => {
-    const newAudio: AudioFile = {
-      ...audioData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    
-    set((state) => ({
-      audios: [...state.audios, newAudio],
-      playlists: state.playlists.map((playlist) =>
-        playlist.id === audioData.playlistId
-          ? { ...playlist, audioCount: playlist.audioCount + 1, updatedAt: new Date() }
-          : playlist
-      ),
-    }));
+  deletePlaylistSupabase: async (id) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { error } = await supabase
+        .from('playlists')
+        .delete()
+        .eq('id', id)
+      
+      if (error) throw error
+      
+      set(state => ({
+        playlists: state.playlists.filter(p => p.id !== id)
+      }))
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to delete playlist' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
   
-  updateAudio: (id, updates) => {
-    set((state) => ({
-      audios: state.audios.map((audio) =>
-        audio.id === id
-          ? { ...audio, ...updates, updatedAt: new Date() }
-          : audio
-      ),
-      currentAudio: state.currentAudio?.id === id
-        ? { ...state.currentAudio, ...updates, updatedAt: new Date() }
-        : state.currentAudio,
-    }));
+  fetchAudiosByPlaylist: async (playlistId) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { data, error } = await supabase
+        .from('audios')
+        .select('*')
+        .eq('playlist_id', playlistId)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      
+      set({ audios: data || [] })
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to fetch audios' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
   
-  deleteAudio: (id) => {
-    set((state) => {
-      const audioToDelete = state.audios.find((audio) => audio.id === id);
-      return {
-        audios: state.audios.filter((audio) => audio.id !== id),
-        playlists: state.playlists.map((playlist) =>
-          playlist.id === audioToDelete?.playlistId
-            ? { ...playlist, audioCount: Math.max(0, playlist.audioCount - 1), updatedAt: new Date() }
-            : playlist
-        ),
-        currentAudio: state.currentAudio?.id === id ? null : state.currentAudio,
-      };
-    });
-  },
+  clearError: () => set({ error: null }),
   
-  // Computed
-  getPlaylistById: (id) => {
-    const { playlists } = get();
-    return playlists.find((playlist) => playlist.id === id) || null;
+  // Additional methods needed by components
+  getUserPlaylists: () => get().playlists,
+  createPlaylist: async (playlistData) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+      
+      const { data, error } = await supabase
+        .from('playlists')
+        .insert([{
+          ...playlistData,
+          owner_id: user.id
+        }])
+        .select()
+        .single()
+      
+      if (error) throw error
+      
+      set(state => ({
+        playlists: [data, ...state.playlists]
+      }))
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to create playlist' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
-  
-  getAudiosByPlaylistId: (playlistId) => {
-    const { audios } = get();
-    return audios.filter((audio) => audio.playlistId === playlistId);
+  updatePlaylist: async (id, updates) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { data, error } = await supabase
+        .from('playlists')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      
+      set(state => ({
+        playlists: state.playlists.map(p => 
+          p.id === id ? { ...p, ...data } : p
+        )
+      }))
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to update playlist' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
-  
-  getPublicPlaylists: () => {
-    const { playlists } = get();
-    return playlists.filter((playlist) => playlist.visibility === 'public');
+  deletePlaylist: async (id) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { error } = await supabase
+        .from('playlists')
+        .delete()
+        .eq('id', id)
+      
+      if (error) throw error
+      
+      set(state => ({
+        playlists: state.playlists.filter(p => p.id !== id)
+      }))
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to delete playlist' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
-  
-  getUserPlaylists: (userId) => {
-    const { playlists } = get();
-    return playlists.filter((playlist) => playlist.ownerId === userId);
+  getAudiosByPlaylistId: (playlistId) => get().audios.filter(audio => audio.playlist_id === playlistId),
+  getPlaylistById: (id) => get().playlists.find(p => p.id === id) || null,
+  getPublicPlaylists: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const { data, error } = await supabase
+        .from('playlists')
+        .select('*')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      
+      set({ publicPlaylists: data || [] })
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to fetch public playlists' })
+    } finally {
+      set({ isLoading: false })
+    }
   },
-}));
+  setPublicPlaylists: (playlists) => set({ publicPlaylists: playlists })
+}))

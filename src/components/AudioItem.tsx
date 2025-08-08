@@ -19,7 +19,8 @@ export const AudioItem: React.FC<AudioItemProps> = ({
 }) => {
   const [showActions, setShowActions] = useState(false);
 
-  const formatDuration = (seconds: number) => {
+  const formatDuration = (seconds: number | undefined) => {
+    if (!seconds) return '0:00';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
@@ -58,7 +59,7 @@ export const AudioItem: React.FC<AudioItemProps> = ({
                 <span>{formatDuration(audio.duration)}</span>
               </div>
               <span>•</span>
-              <span>Added {formatDate(audio.createdAt)}</span>
+              <span>Added {formatDate(new Date(audio.created_at))}</span>
             </div>
           </div>
 

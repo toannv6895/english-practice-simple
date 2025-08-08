@@ -11,10 +11,12 @@ export interface AudioFile {
   id: string;
   name: string;
   url: string;
-  duration: number;
-  playlistId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  duration?: number;
+  file_size?: number;
+  playlist_id: string;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export type PracticeMode = 'listening' | 'dictation' | 'shadowing';
@@ -38,14 +40,17 @@ export type PlaylistVisibility = 'public' | 'protected' | 'private';
 export interface Playlist {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   visibility: PlaylistVisibility;
-  ownerId: string;
-  coverImage?: string;
-  audioCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-  invitedUsers?: string[]; // For protected playlists
+  owner_id: string;
+  cover_image?: string;
+  coverImage?: string; // Add both versions for compatibility
+  audio_count?: number;
+  audioCount?: number; // Add both versions for compatibility
+  created_at: string;
+  createdAt?: string; // Add both versions for compatibility
+  updated_at: string;
+  updatedAt?: string; // Add both versions for compatibility
 }
 
 export interface User {

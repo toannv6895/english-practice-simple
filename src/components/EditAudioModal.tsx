@@ -61,7 +61,7 @@ export const EditAudioModal: React.FC<EditAudioModalProps> = ({
             <div className="flex-1">
               <h3 className="font-medium text-gray-900">{audio.name}</h3>
               <p className="text-sm text-gray-500">
-                Duration: {Math.floor(audio.duration / 60)}:{Math.floor(audio.duration % 60).toString().padStart(2, '0')}
+                Duration: {audio.duration ? `${Math.floor(audio.duration / 60)}:${Math.floor(audio.duration % 60).toString().padStart(2, '0')}` : 'Unknown'}
               </p>
             </div>
           </div>

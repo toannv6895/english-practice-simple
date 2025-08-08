@@ -7,13 +7,12 @@ import { Music, Plus } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { publicPlaylists, getPublicPlaylists, setPublicPlaylists } = usePlaylistStore();
+  const { publicPlaylists, getPublicPlaylists } = usePlaylistStore();
 
   useEffect(() => {
     // Load public playlists
-    const publicPlaylists = getPublicPlaylists();
-    setPublicPlaylists(publicPlaylists);
-  }, [getPublicPlaylists, setPublicPlaylists]);
+    getPublicPlaylists();
+  }, [getPublicPlaylists]);
 
   const handlePlaylistClick = (playlist: Playlist) => {
     navigate(`/playlist/${playlist.id}`);
@@ -46,7 +45,7 @@ export const HomePage: React.FC = () => {
         {/* Playlists Grid */}
         {publicPlaylists.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {publicPlaylists.map((playlist) => (
+            {publicPlaylists.map((playlist: Playlist) => (
               <PlaylistCard
                 key={playlist.id}
                 playlist={playlist}

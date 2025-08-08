@@ -1,21 +1,12 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileUpload } from '../components/FileUpload';
-import { useAppStore } from '../store/useAppStore';
-import { ArrowLeft, Upload } from 'lucide-react';
+
+import { ArrowLeft } from 'lucide-react';
 
 const UploadAudioPage: React.FC = () => {
   const navigate = useNavigate();
-  const { setAudioFile, setAudioUrl } = useAppStore();
-
-  const handleAudioFileSelect = useCallback((file: File) => {
-    setAudioFile(file);
-    const url = URL.createObjectURL(file);
-    setAudioUrl(url);
-    
-    // Navigate back to audio player page after successful upload
-    navigate(-1);
-  }, [setAudioFile, setAudioUrl, navigate]);
+  // Removed unused imports
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,10 +28,14 @@ const UploadAudioPage: React.FC = () => {
         </div>
 
         {/* Upload Component */}
-        <FileUpload onAudioFileSelect={handleAudioFileSelect} />
+        <FileUpload 
+          playlistId="default-playlist" 
+          onUploadComplete={() => navigate(-1)} 
+        />
       </div>
     </div>
   );
 };
 
 export default UploadAudioPage;
+

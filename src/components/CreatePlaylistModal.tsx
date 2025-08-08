@@ -5,7 +5,7 @@ import { X, Upload, Music, Plus } from 'lucide-react';
 interface CreatePlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (playlist: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt' | 'audioCount'>) => void;
+  onCreate: (playlist: Omit<Playlist, 'id' | 'created_at' | 'updated_at' | 'audio_count'>) => void;
 }
 
 export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({
@@ -33,12 +33,12 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({
   const handleCreate = () => {
     if (!name.trim()) return;
 
-    const newPlaylist: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt' | 'audioCount'> = {
+    const newPlaylist: Omit<Playlist, 'id' | 'created_at' | 'updated_at' | 'audio_count'> = {
       name: name.trim(),
       description: description.trim(),
       visibility,
-      ownerId: 'current-user-id', // This should come from auth context
-      coverImage: coverImage || undefined,
+      owner_id: 'current-user-id', // This should come from auth context
+      cover_image: coverImage || undefined,
     };
 
     onCreate(newPlaylist);

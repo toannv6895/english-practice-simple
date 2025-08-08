@@ -20,13 +20,12 @@ export const PlaylistPage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
 
-  const currentUserId = 'current-user-id'; // This should come from auth context
-  const userPlaylists = getUserPlaylists(currentUserId);
+  const userPlaylists = getUserPlaylists();
 
   useEffect(() => {
     // Load user playlists
-    getUserPlaylists(currentUserId);
-  }, [getUserPlaylists, currentUserId]);
+    // This will be handled by the store when needed
+  }, []);
 
   const handlePlaylistClick = (playlist: Playlist) => {
     navigate(`/playlist/${playlist.id}`);
@@ -43,7 +42,7 @@ export const PlaylistPage: React.FC = () => {
     }
   };
 
-  const handleCreatePlaylist = (playlistData: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt' | 'audioCount'>) => {
+  const handleCreatePlaylist = (playlistData: Omit<Playlist, 'id' | 'created_at' | 'updated_at' | 'audio_count'>) => {
     createPlaylist(playlistData);
     setShowCreateModal(false);
   };
@@ -77,7 +76,7 @@ export const PlaylistPage: React.FC = () => {
         {/* Playlists Grid */}
         {userPlaylists.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {userPlaylists.map((playlist) => (
+            {userPlaylists.map((playlist: Playlist) => (
               <PlaylistCard
                 key={playlist.id}
                 playlist={playlist}

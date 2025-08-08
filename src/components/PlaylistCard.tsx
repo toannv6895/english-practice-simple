@@ -45,7 +45,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -62,9 +62,9 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
     >
       {/* Cover Image */}
       <div className="relative h-48 bg-gradient-to-br from-teal-500 to-teal-600 rounded-t-lg overflow-hidden">
-        {playlist.coverImage ? (
+        {playlist.coverImage || playlist.cover_image ? (
           <img
-            src={playlist.coverImage}
+            src={playlist.coverImage || playlist.cover_image || ''}
             alt={playlist.name}
             className="w-full h-full object-cover"
           />
@@ -76,7 +76,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
         
         {/* Audio Count Badge */}
         <div className="absolute top-3 right-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded-full text-sm font-medium">
-          {playlist.audioCount} audio{playlist.audioCount !== 1 ? 's' : ''}
+          {playlist.audioCount || playlist.audio_count || 0} audio{(playlist.audioCount || playlist.audio_count || 0) !== 1 ? 's' : ''}
         </div>
         
         {/* Visibility Badge */}
@@ -97,8 +97,8 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
         </p>
         
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Created {formatDate(playlist.createdAt)}</span>
-          <span>Updated {formatDate(playlist.updatedAt)}</span>
+          <span>Created {formatDate(playlist.createdAt || playlist.created_at)}</span>
+          <span>Updated {formatDate(playlist.updatedAt || playlist.updated_at)}</span>
         </div>
       </div>
 

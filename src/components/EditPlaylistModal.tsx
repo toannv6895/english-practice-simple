@@ -18,15 +18,15 @@ export const EditPlaylistModal: React.FC<EditPlaylistModalProps> = ({
   const [name, setName] = useState(playlist?.name || '');
   const [description, setDescription] = useState(playlist?.description || '');
   const [visibility, setVisibility] = useState(playlist?.visibility || 'public');
-  const [coverImage, setCoverImage] = useState<string | null>(playlist?.coverImage || null);
+  const [coverImage, setCoverImage] = useState<string | null>(playlist?.coverImage || playlist?.cover_image || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (playlist) {
       setName(playlist.name);
-      setDescription(playlist.description);
+      setDescription(playlist.description || '');
       setVisibility(playlist.visibility);
-      setCoverImage(playlist.coverImage || null);
+      setCoverImage(playlist.coverImage || playlist.cover_image || null);
     }
   }, [playlist]);
 
@@ -52,7 +52,7 @@ export const EditPlaylistModal: React.FC<EditPlaylistModalProps> = ({
 
     // If there's a new cover image file, you would typically upload it to a server
     // For now, we'll just use the data URL
-    if (coverImage && coverImage !== playlist.coverImage) {
+    if (coverImage && coverImage !== playlist.coverImage && coverImage !== playlist.cover_image) {
       updates.coverImage = coverImage;
     }
 
@@ -64,7 +64,7 @@ export const EditPlaylistModal: React.FC<EditPlaylistModalProps> = ({
     setName(playlist?.name || '');
     setDescription(playlist?.description || '');
     setVisibility(playlist?.visibility || 'public');
-    setCoverImage(playlist?.coverImage || null);
+    setCoverImage(playlist?.coverImage || playlist?.cover_image || null);
     onClose();
   };
 
