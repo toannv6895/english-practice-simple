@@ -272,8 +272,8 @@ export const ShadowingMode: React.FC = memo(() => {
               isRecording
                 ? "bg-red-500 text-white hover:bg-red-600"
                 : hasRecording
-                ? "bg-amber-500 text-white hover:bg-amber-600"
-                : "bg-primary-500 text-white hover:bg-primary-600"
+                ? "bg-teal-500 text-white hover:bg-teal-600"
+                : "bg-teal-500 text-white hover:bg-teal-600"
             )}
           >
             {isRecording ? (
@@ -299,7 +299,7 @@ export const ShadowingMode: React.FC = memo(() => {
               {shadowingMode === 'sentence' && (
                 <button
                   onClick={replayCurrentSentence}
-                  className="p-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200"
+                  className="p-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors duration-200"
                   title="Replay current sentence"
                 >
                   <Volume2 size={20} />
@@ -308,14 +308,14 @@ export const ShadowingMode: React.FC = memo(() => {
               <button
                 onClick={() => playRecording(shadowingMode === 'sentence' ? currentSentenceIndex : 'full')}
                 disabled={playingRecording === (shadowingMode === 'sentence' ? currentSentenceIndex : 'full')}
-                className="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 disabled:opacity-50"
+                className="p-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors duration-200 disabled:opacity-50"
                 title="Play recording"
               >
                 <Play size={20} />
               </button>
               <button
                 onClick={() => downloadRecording(shadowingMode === 'sentence' ? currentSentenceIndex : 'full')}
-                className="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                className="p-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors duration-200"
                 title="Download recording"
               >
                 <Download size={20} />
@@ -350,7 +350,7 @@ export const ShadowingMode: React.FC = memo(() => {
               name="shadowingMode"
               checked={shadowingMode === 'sentence'}
               onChange={() => setShadowingMode('sentence')}
-              className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 focus:ring-primary-500 focus:ring-2"
+              className="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 focus:ring-teal-500 focus:ring-2"
             />
             <label
               htmlFor="sentence-mode"
@@ -368,7 +368,7 @@ export const ShadowingMode: React.FC = memo(() => {
               name="shadowingMode"
               checked={shadowingMode === 'full'}
               onChange={() => setShadowingMode('full')}
-              className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 focus:ring-primary-500 focus:ring-2"
+              className="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 focus:ring-teal-500 focus:ring-2"
             />
             <label
               htmlFor="full-mode"
@@ -401,7 +401,7 @@ export const ShadowingMode: React.FC = memo(() => {
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
               currentSentenceIndex === subtitles.length - 1
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-primary-500 text-white hover:bg-primary-600"
+                : "bg-teal-500 text-white hover:bg-teal-600"
             )}
           >
             Next

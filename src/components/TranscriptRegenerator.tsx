@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { RefreshCw, Check, X } from 'lucide-react';
 import { SubtitleEntry } from '../types';
-import { regenerateTranscript, getTranscriptPreview, getTranscriptStats } from '../utils/transcriptFormatter';
+import { regenerateTranscript, getTranscriptStats } from '../utils/transcriptFormatter';
 
 interface TranscriptRegeneratorProps {
   originalSubtitles: SubtitleEntry[];
@@ -56,8 +56,8 @@ export const TranscriptRegenerator: React.FC<TranscriptRegeneratorProps> = ({
         <div className="p-6 overflow-y-auto max-h-[60vh]">
           {!previewSubtitles ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <RefreshCw size={24} className="text-primary-600" />
+              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <RefreshCw size={24} className="text-teal-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Ready to regenerate transcript
@@ -95,7 +95,7 @@ export const TranscriptRegenerator: React.FC<TranscriptRegeneratorProps> = ({
               <button
                 onClick={handlePreview}
                 disabled={isProcessing}
-                className="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors duration-200 font-medium"
+                className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors duration-200 font-medium"
               >
                 {isProcessing ? 'Processing...' : 'Preview Regenerated Transcript'}
               </button>
@@ -124,17 +124,17 @@ export const TranscriptRegenerator: React.FC<TranscriptRegeneratorProps> = ({
 
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-3">Regenerated Transcript</h3>
-                  <div className="bg-primary-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                  <div className="bg-teal-50 rounded-lg p-4 max-h-64 overflow-y-auto">
                     {previewSubtitles.slice(0, 5).map((subtitle, index) => (
                       <div key={subtitle.id} className="mb-3 last:mb-0">
-                        <div className="text-xs text-primary-600 mb-1">
+                        <div className="text-xs text-teal-600 mb-1">
                           {index + 1}. {subtitle.text.split(' ').length} words
                         </div>
                         <div className="text-sm text-gray-700">{subtitle.text}</div>
                       </div>
                     ))}
                     {previewSubtitles.length > 5 && (
-                      <div className="text-xs text-primary-600 mt-2">
+                      <div className="text-xs text-teal-600 mt-2">
                         ... and {previewSubtitles.length - 5} more sentences
                       </div>
                     )}
@@ -142,23 +142,23 @@ export const TranscriptRegenerator: React.FC<TranscriptRegeneratorProps> = ({
                 </div>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-4 mb-6">
-                <h4 className="font-medium text-blue-900 mb-2">Regeneration Results:</h4>
+              <div className="bg-teal-50 rounded-lg p-4 mb-6">
+                <h4 className="font-medium text-teal-900 mb-2">Regeneration Results:</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-blue-700">Original sentences:</span>
+                    <span className="text-teal-700">Original sentences:</span>
                     <span className="ml-2 font-medium">{originalStats.totalSentences}</span>
                   </div>
                   <div>
-                    <span className="text-blue-700">New sentences:</span>
+                    <span className="text-teal-700">New sentences:</span>
                     <span className="ml-2 font-medium">{previewStats?.totalSentences}</span>
                   </div>
                   <div>
-                    <span className="text-blue-700">Original words:</span>
+                    <span className="text-teal-700">Original words:</span>
                     <span className="ml-2 font-medium">{originalStats.totalWords}</span>
                   </div>
                   <div>
-                    <span className="text-blue-700">New words:</span>
+                    <span className="text-teal-700">New words:</span>
                     <span className="ml-2 font-medium">{previewStats?.totalWords}</span>
                   </div>
                 </div>
@@ -178,7 +178,7 @@ export const TranscriptRegenerator: React.FC<TranscriptRegeneratorProps> = ({
           {previewSubtitles && (
             <button
               onClick={handleConfirm}
-              className="px-4 py-2 bg-primary-500 text-white hover:bg-primary-600 rounded-lg transition-colors duration-200 font-medium"
+              className="px-4 py-2 bg-teal-600 text-white hover:bg-teal-700 rounded-lg transition-colors duration-200 font-medium"
             >
               <Check size={16} className="inline mr-2" />
               Confirm Regeneration

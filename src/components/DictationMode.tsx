@@ -173,12 +173,12 @@ export const DictationMode: React.FC = memo(() => {
           value={userInput}
           onChange={handleInputChange}
           placeholder="Start typing when you hear the sentence..."
-          className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+          className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
         />
         <div className="mt-2 text-sm text-gray-500">
           <span className="font-medium">Shortcuts:</span> Tab to replay • Enter to next
           {!isCorrect && !showAnswer && (
-            <span className="ml-2 text-amber-600">• Complete the sentence to proceed</span>
+            <span className="ml-2 text-teal-600">• Complete the sentence to proceed</span>
           )}
         </div>
       </div>
@@ -200,14 +200,14 @@ export const DictationMode: React.FC = memo(() => {
         
         <button
           onClick={handleReplay}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors duration-200"
+          className="px-4 py-2 bg-teal-500 text-white rounded-lg text-sm font-medium hover:bg-teal-600 transition-colors duration-200"
         >
           Replay
         </button>
         
         <button
           onClick={handleShowAnswer}
-          className="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-medium hover:bg-yellow-600 transition-colors duration-200"
+          className="px-4 py-2 bg-teal-500 text-white rounded-lg text-sm font-medium hover:bg-teal-600 transition-colors duration-200"
         >
           Show Answer
         </button>
@@ -219,7 +219,7 @@ export const DictationMode: React.FC = memo(() => {
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
             currentSubtitleIndex === subtitles.length - 1 || (!isCorrect && !showAnswer)
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-primary-500 text-white hover:bg-primary-600"
+              : "bg-teal-500 text-white hover:bg-teal-600"
           )}
         >
           Next

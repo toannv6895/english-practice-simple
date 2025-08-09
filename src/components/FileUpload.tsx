@@ -1,63 +1,111 @@
-import React, { useRef, memo } from 'react';
-import { Upload, FileAudio } from 'lucide-react';
-import { useAppStore } from '../store/useAppStore';
+import React, { useCallback, useState } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { useAuthStore } from '../store/useAuthStore'
+import { ServiceFactory } from '../infrastructure/config/ServiceFactory'
 
 interface FileUploadProps {
-  onAudioFileSelect: (file: File) => void;
+  playlistId: string
+  onUploadComplete?: () => void
 }
 
-export const FileUpload: React.FC<FileUploadProps> = memo(({ onAudioFileSelect }) => {
-  const { audioFile } = useAppStore();
-  const audioInputRef = useRef<HTMLInputElement>(null);
-
-  const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('audio/')) {
-      onAudioFileSelect(file);
+export const FileUpload: React.FC<FileUploadProps> = ({ 
+  playlistId, 
+  onUploadComplete 
+}) => {
+  const { user } = useAuthStore()
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (!user) {
+      setError('You must be logged in to upload files')
+      return
     }
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border border-gray-100">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2 text-gray-800">Upload Audio File</h2>
-        <p className="text-gray-600 mb-8">Select an audio file to begin practicing</p>
+    
+    setIsUploading(true)
+    setError(null)
+    
+    try {
+      const audioService = ServiceFactory.getInstance().getAudioService()
+      
+      for (const file of acceptedFiles) {
+        // Validate file type
+        if (!file.type.startsWith('audio/')) {
+          throw new Error(`${file.name} is not an audio file`)
+        }
         
-        <div className="max-w-md mx-auto">
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-400 transition-colors duration-200">
-            <FileAudio className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-            <p className="text-sm text-gray-600 mb-4">
-              {audioFile ? audioFile.name : 'No audio file selected'}
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(`${file.name} is too large (max 10MB)`)
+        }
+        
+        // Upload using new architecture
+        await audioService.uploadAudio(file, user.id, playlistId)
+        
+        setUploadProgress((prev) => prev + (100 / acceptedFiles.length))
+      }
+      
+      onUploadComplete?.()
+    } catch (error: any) {
+      setError(error.message || 'Upload failed')
+    } finally {
+      setIsUploading(false)
+      setUploadProgress(0)
+    }
+  }, [user, playlistId, onUploadComplete])
+  
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'audio/*': ['.mp3', '.wav', '.m4a', '.aac', '.ogg']
+    },
+    disabled: isUploading
+  })
+  
+  return (
+    <div className="w-full">
+      <div
+        {...getRootProps()}
+        className={`
+          border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
+          transition-colors duration-200
+          ${isDragActive 
+            ? 'border-blue-500 bg-blue-50' 
+            : 'border-gray-300 hover:border-gray-400'
+          }
+          ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
+      >
+        <input {...getInputProps()} />
+        
+        {isUploading ? (
+          <div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-sm text-gray-600">
+              Uploading... {Math.round(uploadProgress)}%
             </p>
-            <button
-              onClick={() => audioInputRef.current?.click()}
-              className="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-            >
-              <Upload className="inline w-5 h-5 mr-2" />
-              Select Audio File
-            </button>
-            <input
-              ref={audioInputRef}
-              type="file"
-              accept="audio/*"
-              onChange={handleAudioFileChange}
-              className="hidden"
-            />
           </div>
-        </div>
-
-        {/* Instructions */}
-        <div className="mt-8 p-4 bg-primary-50 rounded-lg max-w-md mx-auto">
-          <h4 className="font-medium text-primary-800 mb-2">How it works:</h4>
-          <ul className="text-sm text-primary-700 space-y-1">
-            <li>• Upload an audio file (MP3, WAV, OGG, M4A)</li>
-            <li>• If you have a transcript file (.srt or .vtt) with the same name in the same folder, it will be automatically detected</li>
-            <li>• You can also import a transcript later using the toolbar</li>
-          </ul>
-        </div>
+        ) : (
+          <div>
+            <p className="text-lg font-medium text-gray-700 mb-2">
+              {isDragActive ? 'Drop audio files here' : 'Drag & drop audio files here'}
+            </p>
+            <p className="text-sm text-gray-500">
+              or click to select files (MP3, WAV, M4A, AAC, OGG)
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Max file size: 10MB
+            </p>
+          </div>
+        )}
       </div>
+      
+      {error && (
+        <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
+          {error}
+        </div>
+      )}
     </div>
-  );
-});
-
-FileUpload.displayName = 'FileUpload';
+  )
+}

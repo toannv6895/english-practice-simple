@@ -251,7 +251,7 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
             
             <button
               onClick={handlePlayPause}
-              className="p-3 rounded-full bg-primary-500 hover:bg-primary-600 text-white transition-colors duration-200 shadow-md"
+              className="p-3 rounded-full bg-teal-600 hover:bg-teal-700 text-white transition-colors duration-200 shadow-md"
             >
               {isPlaying ? <Pause size={24} /> : <Play size={24} />}
             </button>
@@ -316,7 +316,7 @@ export const AudioPlayerComponent: React.FC<AudioPlayerProps> = memo(({ classNam
               className={cn(
                 "p-2 rounded-full transition-colors duration-200",
                 isReplayEnabled
-                  ? "bg-primary-500 text-white"
+                  ? "bg-teal-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               )}
               title={isReplayEnabled ? "Replay enabled" : "Replay disabled"}
