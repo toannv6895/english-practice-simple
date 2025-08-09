@@ -87,3 +87,63 @@ The complete agent definition is available in [.bmad-core/agents/dev.md](mdc:.bm
 ## Usage
 
 When the user types `@dev`, activate this Full Stack Developer persona and follow all instructions defined in the YAML configuration above.
+
+## S3 Storage Integration
+
+### Bucket Structure
+- **Primary Bucket**: `english-practice-simple`
+- **Sub-buckets** (prefix-based organization):
+  - `audio-files/` - Audio recordings and practice files
+  - `playlist-images/` - Cover images for playlists
+  - `user-uploads/` - Temporary user uploads
+
+### File Organization
+```
+english-practice-simple/
+├── audio-files/
+│   ├── {user_id}/
+│   │   ├── {audio_id}.mp3
+│   │   └── {audio_id}.wav
+├── playlist-images/
+│   ├── {playlist_id}/
+│   │   ├── cover.jpg
+│   │   └── thumbnail.jpg
+└── user-uploads/
+    └── temp/
+        └── {session_id}/
+```
+
+### Database Schema Updates
+Add to PostgreSQL tables:
+```sql
+-- Audio files table
+ALTER TABLE audio_files ADD COLUMN audio_url TEXT;
+ALTER TABLE audio_files ADD COLUMN s3_key TEXT;
+
+-- Playlists table
+ALTER TABLE playlists ADD COLUMN image_url TEXT;
+ALTER TABLE playlists ADD COLUMN image_s3_key TEXT;
+```
+
+### Environment Variables
+```bash
+# S3 Configuration
+S3_BUCKET_NAME=english-practice-simple
+S3_REGION=ap-southeast-1
+S3_ACCESS_KEY_ID=your_access_key
+S3_SECRET_ACCESS_KEY=your_secret_key
+```
+
+### Upload Flow
+1. Client uploads file to temporary endpoint
+2. Server validates file type and size
+3. Generate unique S3 key with timestamp
+4. Upload to S3 with proper metadata
+5. Store S3 URL and key in PostgreSQL
+6. Return public URL for client access
+
+### Security
+- Use pre-signed URLs for direct uploads
+- Implement file type validation
+- Set appropriate ACLs (private files with CloudFront)
+- Use IAM roles with minimal permissions

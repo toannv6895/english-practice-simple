@@ -1,8 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useAuthStore } from '../store/useAuthStore'
-import { uploadAudioFile } from '../utils/storage'
-import { supabase } from '../lib/supabase'
+import { ServiceFactory } from '../infrastructure/config/ServiceFactory'
 
 interface FileUploadProps {
   playlistId: string
@@ -28,6 +27,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setError(null)
     
     try {
+      const audioService = ServiceFactory.getInstance().getAudioService()
+      
       for (const file of acceptedFiles) {
         // Validate file type
         if (!file.type.startsWith('audio/')) {
@@ -39,21 +40,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           throw new Error(`${file.name} is too large (max 10MB)`)
         }
         
-        // Upload to Supabase Storage
-        const url = await uploadAudioFile(file, user.id, playlistId)
-        
-        // Save metadata to database
-        const { error: dbError } = await supabase
-          .from('audios')
-          .insert([{
-            name: file.name,
-            url,
-            playlist_id: playlistId,
-            owner_id: user.id,
-            file_size: file.size
-          }])
-        
-        if (dbError) throw dbError
+        // Upload using new architecture
+        await audioService.uploadAudio(file, user.id, playlistId)
         
         setUploadProgress((prev) => prev + (100 / acceptedFiles.length))
       }

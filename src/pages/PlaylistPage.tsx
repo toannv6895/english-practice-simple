@@ -4,28 +4,27 @@ import { PlaylistCard } from '../components/PlaylistCard';
 import { CreatePlaylistModal } from '../components/CreatePlaylistModal';
 import { EditPlaylistModal } from '../components/EditPlaylistModal';
 import { usePlaylistStore } from '../store/usePlaylistStore';
-import { Playlist } from '../types';
+import { Playlist, PlaylistVisibility } from '../types';
 import { Music, Plus } from 'lucide-react';
 
 export const PlaylistPage: React.FC = () => {
   const navigate = useNavigate();
   const {
-    getUserPlaylists,
+    playlists: userPlaylists,
+    fetchUserPlaylists,
     createPlaylist,
     updatePlaylist,
     deletePlaylist,
+    isLoading,
   } = usePlaylistStore();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
 
-  const userPlaylists = getUserPlaylists();
-
   useEffect(() => {
-    // Load user playlists
-    // This will be handled by the store when needed
-  }, []);
+    fetchUserPlaylists();
+  }, [fetchUserPlaylists]);
 
   const handlePlaylistClick = (playlist: Playlist) => {
     navigate(`/playlist/${playlist.id}`);
@@ -42,7 +41,12 @@ export const PlaylistPage: React.FC = () => {
     }
   };
 
-  const handleCreatePlaylist = (playlistData: Omit<Playlist, 'id' | 'created_at' | 'updated_at' | 'audio_count'>) => {
+  const handleCreatePlaylist = (playlistData: {
+    name: string;
+    description?: string;
+    visibility: PlaylistVisibility;
+    cover_image?: string;
+  }) => {
     createPlaylist(playlistData);
     setShowCreateModal(false);
   };
@@ -74,7 +78,12 @@ export const PlaylistPage: React.FC = () => {
         </div>
 
         {/* Playlists Grid */}
-        {userPlaylists.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading playlists...</p>
+          </div>
+        ) : userPlaylists.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {userPlaylists.map((playlist: Playlist) => (
               <PlaylistCard
