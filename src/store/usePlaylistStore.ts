@@ -140,26 +140,59 @@ export const usePlaylistStore = create<PlaylistState>((set, get) => ({
         }
       }
       
-      const { data, error } = await supabase
-        .from('playlists')
-        .insert([{
-          name: playlistData.name,
-          description: playlistData.description,
-          visibility: playlistData.visibility,
-          owner_id: user.id,
-          cover_image: coverImageUrl,
-          storage_key: storageKey,
-          storage_provider: storageProvider,
-          storage_url: coverImageUrl,
-          audio_count: 0
-        }])
-        .select()
-        .single()
-      
-      if (error) throw error
-      
+      // Build insert payload, but be defensive: some Supabase schemas may not include storage-related columns.
+      const insertData: any = {
+        name: playlistData.name,
+        description: playlistData.description,
+        visibility: playlistData.visibility,
+        owner_id: user.id,
+        audio_count: 0
+      }
+
+      if (coverImageUrl && storageKey && storageProvider) {
+        insertData.cover_image = coverImageUrl
+        insertData.storage_key = storageKey
+        insertData.storage_provider = storageProvider
+        insertData.storage_url = coverImageUrl
+      }
+
+      // Try inserting; if the schema is missing columns (PGRST204), remove storage-related fields and retry.
+      let result: any
+      try {
+        const { data, error } = await supabase
+          .from('playlists')
+          .insert([insertData])
+          .select()
+          .single()
+
+        if (error) throw error
+        result = data
+      } catch (err: any) {
+        // If Supabase reports a missing column, strip storage/cover fields and retry
+        const msg: string = err?.message || ''
+        const missingColMatch = msg.match(/Could not find the '([^']+)' column/)
+        if (missingColMatch) {
+          console.warn('Supabase schema missing column:', missingColMatch[1], '- retrying insert without storage fields')
+          delete insertData.cover_image
+          delete insertData.storage_key
+          delete insertData.storage_provider
+          delete insertData.storage_url
+
+          const retry = await supabase
+            .from('playlists')
+            .insert([insertData])
+            .select()
+            .single()
+
+          if (retry.error) throw retry.error
+          result = retry.data
+        } else {
+          throw err
+        }
+      }
+
       set(state => ({
-        playlists: [data, ...state.playlists]
+        playlists: [result, ...state.playlists]
       }))
     } catch (error: any) {
       set({ error: error.message || 'Failed to create playlist' })
@@ -286,35 +319,61 @@ export const usePlaylistStore = create<PlaylistState>((set, get) => ({
         }
       }
       
-      const insertData = {
+      // Build insert payload, but be defensive: some Supabase schemas may not include storage-related columns.
+      const insertData: any = {
         name: playlistData.name,
         description: playlistData.description,
         visibility: playlistData.visibility,
         owner_id: user.id,
-        cover_image: coverImageUrl,
-        storage_key: storageKey,
-        storage_provider: storageProvider,
-        storage_url: coverImageUrl,
         audio_count: 0
       }
-      
-      console.log('Inserting playlist data:', insertData)
-      
-      const { data, error } = await supabase
-        .from('playlists')
-        .insert([insertData])
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('Supabase insert error:', error)
-        throw error
+
+      if (coverImageUrl && storageKey && storageProvider) {
+        insertData.cover_image = coverImageUrl
+        insertData.storage_key = storageKey
+        insertData.storage_provider = storageProvider
+        insertData.storage_url = coverImageUrl
       }
-      
-      console.log('Playlist created successfully:', data)
+
+      // Try inserting; if the schema is missing columns (PGRST204), remove storage-related fields and retry.
+      let result: any
+      try {
+        const { data, error } = await supabase
+          .from('playlists')
+          .insert([insertData])
+          .select()
+          .single()
+
+        if (error) throw error
+        result = data
+      } catch (err: any) {
+        // If Supabase reports a missing column, strip storage/cover fields and retry
+        const msg: string = err?.message || ''
+        const missingColMatch = msg.match(/Could not find the '([^']+)' column/)
+        if (missingColMatch) {
+          console.warn('Supabase schema missing column:', missingColMatch[1], '- retrying insert without storage fields')
+          delete insertData.cover_image
+          delete insertData.storage_key
+          delete insertData.storage_provider
+          delete insertData.storage_url
+
+          const retry = await supabase
+            .from('playlists')
+            .insert([insertData])
+            .select()
+            .single()
+
+          if (retry.error) throw retry.error
+          result = retry.data
+        } else {
+          throw err
+        }
+      }
+
+      console.log('Playlist created successfully:', result)
       
       set(state => ({
-        playlists: [data, ...state.playlists]
+        playlists: [result, ...state.playlists]
       }))
     } catch (error: any) {
       console.error('Error creating playlist:', error)

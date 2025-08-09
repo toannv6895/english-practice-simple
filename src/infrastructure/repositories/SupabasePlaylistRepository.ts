@@ -4,19 +4,36 @@ import { supabase } from '../../lib/supabase';
 
 export class SupabasePlaylistRepository implements PlaylistRepository {
   async save(playlist: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt'>): Promise<Playlist> {
+    // Build insert payload defensively — callers may provide visibility or a cover image via imageLocation
+    const insertData: any = {
+      owner_id: (playlist as any).userId || (playlist as any).owner_id,
+      name: (playlist as any).name,
+      description: (playlist as any).description ?? null,
+      audio_count: 0,
+    };
+
+    // Preserve explicit visibility when provided, otherwise default to 'private'
+    insertData.visibility = (playlist as any).visibility ?? 'private';
+
+    // Handle image/location metadata if available
+    if ((playlist as any).imageLocation) {
+      insertData.storage_provider = (playlist as any).imageLocation.provider;
+      insertData.storage_key = (playlist as any).imageLocation.key;
+      insertData.storage_url = (playlist as any).imageLocation.url;
+      insertData.cover_image = (playlist as any).imageLocation.url ?? null;
+    } else {
+      // allow callers to pass cover_image/storage_* fields directly (some code paths insert these)
+      if ((playlist as any).cover_image) insertData.cover_image = (playlist as any).cover_image;
+      if ((playlist as any).storage_provider) insertData.storage_provider = (playlist as any).storage_provider;
+      if ((playlist as any).storage_key) insertData.storage_key = (playlist as any).storage_key;
+      if ((playlist as any).storage_url) insertData.storage_url = (playlist as any).storage_url;
+      // ensure cover_image exists as explicit null if not provided
+      insertData.cover_image = insertData.cover_image ?? null;
+    }
+
     const { data, error } = await supabase
       .from('playlists')
-      .insert({
-        owner_id: playlist.userId,
-        name: playlist.name,
-        description: playlist.description,
-        storage_provider: playlist.imageLocation?.provider,
-        storage_key: playlist.imageLocation?.key,
-        storage_url: playlist.imageLocation?.url,
-        audio_count: 0,
-        visibility: 'private',
-        cover_image: null
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -37,14 +54,15 @@ export class SupabasePlaylistRepository implements PlaylistRepository {
   }
 
   async findByUserId(userId: string): Promise<Playlist[]> {
+    // The DB column for owner is 'owner_id' — use that consistently
     const { data, error } = await supabase
       .from('playlists')
       .select('*')
-      .eq('user_id', userId)
+      .eq('owner_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data.map(this.mapToEntity);
+    return (data || []).map((d: any) => this.mapToEntity(d));
   }
 
   async update(id: string, updates: Partial<Playlist>): Promise<Playlist> {
@@ -128,13 +146,13 @@ export class SupabasePlaylistRepository implements PlaylistRepository {
       id: data.id,
       userId: data.owner_id,
       name: data.name,
-      description: data.description,
+      description: data.description ?? undefined,
       imageLocation: data.storage_key ? {
         provider: data.storage_provider,
         key: data.storage_key,
         url: data.storage_url,
       } : undefined,
-      audioIds: [],
+      audioIds: data.audio_ids || [],
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };

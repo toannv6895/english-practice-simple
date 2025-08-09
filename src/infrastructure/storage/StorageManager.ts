@@ -91,7 +91,25 @@ export class StorageManager {
   }
 
   private getDefaultProvider(): string {
-    // Logic to determine default provider based on environment
+    // Prefer an explicit environment override when available (set REACT_APP_DEFAULT_STORAGE to 'local'|'s3'|'supabase')
+    try {
+      const env = (process.env as any).REACT_APP_DEFAULT_STORAGE;
+      if (env) {
+        const normalized = String(env).toLowerCase();
+        if (normalized === 'local') return StorageProvider.LOCAL;
+        if (normalized === 's3') return StorageProvider.S3;
+        if (normalized === 'supabase') return StorageProvider.SUPABASE;
+      }
+    } catch {
+      // ignore in non-Node-like environments
+    }
+
+    // During tests default to local storage so unit/integration tests don't rely on remote services
+    if (typeof process !== 'undefined' && (process.env as any)?.NODE_ENV === 'test') {
+      return StorageProvider.LOCAL;
+    }
+
+    // Default to Supabase for the running application
     return StorageProvider.SUPABASE;
   }
 }
